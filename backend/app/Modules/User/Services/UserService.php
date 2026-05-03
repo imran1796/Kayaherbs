@@ -2,19 +2,18 @@
 
 namespace App\Modules\User\Services;
 
-use App\Core\Services\BaseService;
 use App\Models\User;
-use App\Modules\User\Repositories\Contracts\UserRepositoryInterface;
+use App\Modules\User\Repositories\UserRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
-class UserService extends BaseService
+class UserService
 {
     public function __construct(
-        protected UserRepositoryInterface $users
-    ) {
-    }
+        protected UserRepository $users
+    ) {}
 
     public function paginate(int $perPage = 15): LengthAwarePaginator
     {
@@ -28,7 +27,7 @@ class UserService extends BaseService
 
     public function create(array $data): User
     {
-        return $this->transaction('users.create', function () use ($data): User {
+        return DB::transaction(function () use ($data): User {
             $existingUser = $this->users->findByEmail($data['email']);
 
             if ($existingUser !== null) {
@@ -40,13 +39,13 @@ class UserService extends BaseService
             /** @var User $user */
             $user = $this->users->create($this->sanitizePayload($data));
 
-            return $user;
+            return $this->syncRoles($user, $data);
         });
     }
 
     public function update(int $id, array $data): User
     {
-        return $this->transaction('users.update', function () use ($id, $data): User {
+        return DB::transaction(function () use ($id, $data): User {
             $user = $this->findOrFail($id);
             $existingUser = $this->users->findByEmail($data['email']);
 
@@ -59,13 +58,13 @@ class UserService extends BaseService
             /** @var User $updatedUser */
             $updatedUser = $this->users->update($user, $this->sanitizePayload($data, false));
 
-            return $updatedUser;
+            return $this->syncRoles($updatedUser, $data);
         });
     }
 
     public function delete(int $id): bool
     {
-        return $this->transaction('users.delete', function () use ($id): bool {
+        return DB::transaction(function () use ($id): bool {
             $user = $this->findOrFail($id);
 
             return $this->users->delete($user);
@@ -89,5 +88,30 @@ class UserService extends BaseService
         }
 
         return $payload;
+    }
+
+    protected function syncRoles(User $user, array $data): User
+    {
+        if (! array_key_exists('roles', $data)) {
+            return $user->refresh();
+        }
+
+        $roles = array_values(array_filter((array) $data['roles']));
+
+        $user->syncRoles($roles);
+
+        $user->forceFill([
+            'is_admin' => $this->rolesMakeAdmin($roles),
+        ])->save();
+
+        return $user->refresh();
+    }
+
+    /**
+     * @param  list<string>  $roles
+     */
+    private function rolesMakeAdmin(array $roles): bool
+    {
+        return count(array_diff($roles, ['customer'])) > 0;
     }
 }

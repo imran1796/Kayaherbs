@@ -15,9 +15,14 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h3 class="card-title">Users</h3>
-                    <p class="text-secondary mb-0 mt-1">Sample admin listing powered by the existing user module.</p>
+                    <p class="text-secondary mb-0 mt-1">Manage platform users from the admin panel.</p>
                 </div>
-                <span class="badge text-bg-primary">{{ $users->total() }} total</span>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge text-bg-primary">{{ $users->total() }} total</span>
+                    @can('users.create')
+                        <a href="{{ route('admin.users.create') }}" class="btn btn-sm btn-primary">Create user</a>
+                    @endcan
+                </div>
             </div>
         </div>
         <div class="card-body p-0">
@@ -29,7 +34,9 @@
                             <th>Name</th>
                             <th>Email</th>
                             <th>Status</th>
+                            <th>Roles</th>
                             <th>Joined</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -43,11 +50,23 @@
                                         {{ ucfirst($user->status) }}
                                     </span>
                                 </td>
+                                <td>
+                                    @forelse ($user->getRoleNames() as $role)
+                                        <span class="badge text-bg-light border me-1">{{ str($role)->replace('_', ' ')->title() }}</span>
+                                    @empty
+                                        <span class="text-secondary">No roles</span>
+                                    @endforelse
+                                </td>
                                 <td>{{ $user->created_at?->format('d M Y') }}</td>
+                                <td class="text-end">
+                                    @can('users.update')
+                                        <a href="{{ route('admin.users.edit', $user->id) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+                                    @endcan
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-4 text-secondary">No users found yet.</td>
+                                <td colspan="7" class="text-center py-4 text-secondary">No users found yet.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -61,3 +80,11 @@
         @endif
     </div>
 @endsection
+
+@if (session('status'))
+    @push('scripts')
+        <script>
+            adminToast(@json(session('status')));
+        </script>
+    @endpush
+@endif

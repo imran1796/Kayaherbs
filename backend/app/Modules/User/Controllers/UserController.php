@@ -14,8 +14,7 @@ class UserController extends Controller
 {
     public function __construct(
         protected UserService $service
-    ) {
-    }
+    ) {}
 
     public function index(Request $request)
     {

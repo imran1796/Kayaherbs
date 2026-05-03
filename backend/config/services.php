@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'payment_webhooks' => [
+        'signature_header' => env('PAYMENT_WEBHOOK_SIGNATURE_HEADER', 'X-Payment-Signature'),
+        'providers' => [
+            'manual_bank' => [
+                'secret' => env('MANUAL_BANK_WEBHOOK_SECRET'),
+            ],
+            'cod' => [
+                'secret' => env('COD_WEBHOOK_SECRET'),
+            ],
+        ],
+    ],
+
 ];

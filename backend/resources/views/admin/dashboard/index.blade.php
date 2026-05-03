@@ -2,14 +2,14 @@
 
 @section('title', 'Dashboard')
 @section('page_title', 'Dashboard')
-@section('page_subtitle', 'AdminLTE 4 is now driving the admin frontend shell.')
+@section('page_subtitle', 'Operational summary for orders, customers, and inventory.')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item active" aria-current="page">Dashboard</li>
 @endsection
 
 @section('content')
-    <div class="row">
+    <div class="row g-3">
         <div class="col-lg-4 col-12">
             <div class="small-box text-bg-primary stat-card">
                 <div class="inner">
@@ -54,42 +54,133 @@
         </div>
     </div>
 
-    <div class="row">
+    <div class="row g-3 mt-1">
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Order Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="placeholder-glow d-none" id="order-summary-loading">
+                        <span class="placeholder col-8"></span>
+                        <span class="placeholder col-6"></span>
+                        <span class="placeholder col-10"></span>
+                    </div>
+                    <dl class="row mb-0">
+                        <dt class="col-7">Total orders</dt>
+                        <dd class="col-5 text-end fw-semibold">{{ $orderSummary['total_orders'] }}</dd>
+                        <dt class="col-7">Pending</dt>
+                        <dd class="col-5 text-end">{{ $orderSummary['status_counts']['pending'] ?? 0 }}</dd>
+                        <dt class="col-7">Processing</dt>
+                        <dd class="col-5 text-end">{{ $orderSummary['status_counts']['processing'] ?? 0 }}</dd>
+                        <dt class="col-7">Delivered</dt>
+                        <dd class="col-5 text-end">{{ $orderSummary['status_counts']['delivered'] ?? 0 }}</dd>
+                        <dt class="col-7">Cancelled</dt>
+                        <dd class="col-5 text-end">{{ $orderSummary['status_counts']['cancelled'] ?? 0 }}</dd>
+                    </dl>
+                    @if ($orderSummary['total_orders'] === 0)
+                        <p class="text-secondary mb-0 mt-3">No orders have been placed yet.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Customer Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="placeholder-glow d-none" id="customer-summary-loading">
+                        <span class="placeholder col-9"></span>
+                        <span class="placeholder col-5"></span>
+                        <span class="placeholder col-7"></span>
+                    </div>
+                    <dl class="row mb-0">
+                        <dt class="col-7">Total customers</dt>
+                        <dd class="col-5 text-end fw-semibold">{{ $customerSummary['total_customers'] }}</dd>
+                        <dt class="col-7">Active</dt>
+                        <dd class="col-5 text-end">{{ $customerSummary['active_customers'] }}</dd>
+                        <dt class="col-7">With orders</dt>
+                        <dd class="col-5 text-end">{{ $customerSummary['customers_with_orders'] }}</dd>
+                        <dt class="col-7">Repeat customers</dt>
+                        <dd class="col-5 text-end">{{ $customerSummary['repeat_customers'] }}</dd>
+                    </dl>
+                    @if ($customerSummary['total_customers'] === 0)
+                        <p class="text-secondary mb-0 mt-3">No customers found yet.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h3 class="card-title">Low-Stock Summary</h3>
+                </div>
+                <div class="card-body">
+                    <div class="placeholder-glow d-none" id="low-stock-summary-loading">
+                        <span class="placeholder col-10"></span>
+                        <span class="placeholder col-6"></span>
+                        <span class="placeholder col-8"></span>
+                    </div>
+                    <dl class="row mb-0">
+                        <dt class="col-7">Tracked variants</dt>
+                        <dd class="col-5 text-end">{{ $lowStockSummary['tracked_variants'] }}</dd>
+                        <dt class="col-7">Available stock</dt>
+                        <dd class="col-5 text-end">{{ $lowStockSummary['total_available'] }}</dd>
+                        <dt class="col-7">Low-stock items</dt>
+                        <dd class="col-5 text-end fw-semibold">{{ $lowStockSummary['low_stock_count'] }}</dd>
+                    </dl>
+                    @if ($lowStockSummary['low_stock_count'] === 0)
+                        <p class="text-secondary mb-0 mt-3">No low-stock items right now.</p>
+                    @endif
+                </div>
+                <div class="card-footer">
+                    <a href="{{ route('admin.inventory.index') }}" class="btn btn-primary">Open inventory</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3">
         <div class="col-lg-7">
             <div class="card mb-4">
                 <div class="card-header">
-                    <h3 class="card-title">Admin frontend integrated</h3>
+                    <h3 class="card-title">Low-Stock Items</h3>
                 </div>
-                <div class="card-body">
-                    <p class="mb-3">
-                        The admin area now uses the supplied AdminLTE 4 template as a shared Laravel layout, so
-                        new pages can plug into the same header, sidebar, footer, and styling.
-                    </p>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <h4 class="h6">Reusable layout</h4>
-                                <p class="mb-0 text-secondary">
-                                    Dashboard and user management now extend one Blade layout instead of each page
-                                    shipping its own custom HTML shell.
-                                </p>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="border rounded p-3 h-100">
-                                <h4 class="h6">Template assets published</h4>
-                                <p class="mb-0 text-secondary">
-                                    AdminLTE CSS, JS, and image assets are available from Laravel's public
-                                    directory for direct use in admin views.
-                                </p>
-                            </div>
-                        </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>SKU</th>
+                                    <th>Available</th>
+                                    <th>Threshold</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse ($lowStockRows as $stock)
+                                    <tr>
+                                        <td>
+                                            <div class="fw-semibold">{{ $stock['product_name'] ?? 'Unassigned product' }}</div>
+                                            <div class="small text-secondary">{{ $stock['variant_name'] ?? 'Default' }}</div>
+                                        </td>
+                                        <td>{{ $stock['sku'] }}</td>
+                                        <td>{{ $stock['available_quantity'] }}</td>
+                                        <td>{{ $stock['low_stock_threshold'] }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="4" class="text-center py-4 text-secondary">
+                                            No low-stock items found.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
-                </div>
-                <div class="card-footer">
-                    <a href="{{ route('admin.users.index') }}" class="btn btn-primary">
-                        Go to user management
-                    </a>
                 </div>
             </div>
         </div>

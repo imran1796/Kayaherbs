@@ -3,7 +3,9 @@
 use App\Http\Controllers\Admin\DashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', DashboardController::class)->name('dashboard');
+Route::get('/', DashboardController::class)
+    ->middleware(['auth', 'admin', 'can:admin.dashboard.view'])
+    ->name('dashboard');
 
 $modules = require base_path('config/modules.php');
 

@@ -8,10 +8,10 @@ use Throwable;
 
 abstract class BaseService
 {
-    protected function transaction(string $operation, callable $callback): mixed
+    protected function transaction(string $operation, callable $callback, int $attempts = 1): mixed
     {
         try {
-            return DB::transaction($callback);
+            return DB::transaction($callback, $attempts);
         } catch (Throwable $exception) {
             Log::channel('business')->error('Transactional service operation failed.', [
                 'operation' => $operation,

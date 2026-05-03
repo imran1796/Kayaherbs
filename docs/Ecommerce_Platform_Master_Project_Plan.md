@@ -488,8 +488,8 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `B2.2` implement customer authentication domain
 - `B2.3` implement password reset flow
 - `B2.4` implement session/token lifecycle handling
-- `B2.5` implement roles model
-- `B2.6` implement permissions model
+- `B2.5` implement roles model -front end needed later 
+- `B2.6` implement permissions model-front end needed later 
 - `B2.7` implement policy/gate enforcement strategy
 - `B2.8` implement audit events for auth-sensitive actions
 - `B2.9` add rate limiting around auth endpoints
@@ -534,10 +534,10 @@ Use this as the engineering-level checklist while implementing backend modules.
 
 - `B6.1` customer profile domain
 - `B6.2` customer address domain
-- `B6.3` customer order linkage
-- `B6.4` customer tags/notes support
-- `B6.5` customer status management
-- `B6.6` customer support-oriented data structure
+- [DONE] `B6.3` customer order linkage
+- [DONE] `B6.4` customer tags/notes support
+- [DONE] `B6.5` customer status management
+- [DONE] `B6.6` customer support-oriented data structure
 
 ### B7. Cart Domain
 
@@ -561,6 +561,12 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `B8.7` idempotent checkout submission handling
 - `B8.8` rollback and compensation rules
 - `B8.9` order confirmation event generation
+Group 1: B8.1 + B8.2
+Group 2: B8.3 + B8.4
+Group 3: B8.5 + B8.6 + B8.7 + B8.8
+Group 4: B8.9
+
+
 
 ### B9. Orders And Fulfillment
 
@@ -574,6 +580,11 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `B9.8` packing slip baseline
 - `B9.9` shipment linkage
 
+B9.1 + B9.2 + B9.3
+B9.4 + B9.5
+B9.7 + B9.8
+B9.6 + B9.9
+
 ### B10. Payments
 
 - `B10.1` payment entity and states
@@ -584,7 +595,12 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `B10.6` webhook idempotency
 - `B10.7` order-payment synchronization rules
 
-### B11. Shipping And Courier
+B10.1 + B10.7
+B10.2 + B10.3
+B10.4
+B10.5 + B10.6
+
+### B11. Shipping And Courier //skipped 
 
 - `B11.1` delivery zones
 - `B11.2` delivery rules and rates
@@ -594,7 +610,7 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `B11.6` courier webhook normalization
 - `B11.7` shipment state synchronization
 
-### B12. Content And CMS Support
+### B12. Content And CMS Support //skip 
 
 - `B12.1` policy pages
 - `B12.2` content pages
@@ -609,7 +625,11 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `B13.3` sales reporting queries
 - `B13.4` inventory reporting queries
 - `B13.5` customer reporting queries
-- `B13.6` export job infrastructure
+- `B13.6` export job infrastructure //skip 
+
+B13.1 + B13.2 + B13.3
+B13.4 + B13.5
+B13.6
 
 ### B14. Security, Audit, And Observability
 
@@ -679,109 +699,109 @@ For every endpoint, define:
 
 ### A1. API Foundation
 
-- `A1.1` define API versioning strategy
-- `A1.2` define response envelope standard
-- `A1.3` define error response contract
-- `A1.4` define pagination contract
-- `A1.5` define filtering and sorting conventions
-- `A1.6` define authentication guard strategy for APIs
-- `A1.7` define rate limiting profile by endpoint category
-- `A1.8` define API documentation workflow
+- [DONE] `A1.1` define API versioning strategy
+- [DONE] `A1.2` define response envelope standard
+- [DONE] `A1.3` define error response contract
+- [DONE] `A1.4` define pagination contract
+- [PARTIAL] `A1.5` define filtering and sorting conventions
+- [DONE] `A1.6` define authentication guard strategy for APIs
+- [DONE] `A1.7` define rate limiting profile by endpoint category
+- [PARTIAL] `A1.8` define API documentation workflow
 
 ### A2. Auth APIs
 
-- `A2.1` admin login API
-- `A2.2` customer register API
-- `A2.3` customer login API
-- `A2.4` logout API
-- `A2.5` password reset APIs
-- `A2.6` token refresh API if applicable
-- `A2.7` current user/profile API
+- [PENDING] `A2.1` admin login API
+- [DONE] `A2.2` customer register API
+- [DONE] `A2.3` customer login API
+- [DONE] `A2.4` logout API
+- [DONE] `A2.5` password reset APIs
+- [PENDING] `A2.6` token refresh API if applicable
+- [DONE] `A2.7` current user/profile API
 
 ### A3. Settings And Platform APIs
 
-- `A3.1` store settings retrieval API
-- `A3.2` settings update API
-- `A3.3` module control APIs if exposed
-- `A3.4` public store configuration API for storefront
+- [DONE] `A3.1` store settings retrieval API
+- [DONE] `A3.2` settings update API
+- [DONE] `A3.3` module control APIs if exposed
+- [PENDING] `A3.4` public store configuration API for storefront
 
 ### A4. Catalog APIs
 
-- `A4.1` category list API
-- `A4.2` category tree API
-- `A4.3` product list API
-- `A4.4` product details API
-- `A4.5` product filters API behavior
-- `A4.6` search API behavior
-- `A4.7` admin catalog CRUD APIs if API-driven screens are used
+- [DONE] `A4.1` category list API
+- [PENDING] `A4.2` category tree API
+- [DONE] `A4.3` product list API
+- [DONE] `A4.4` product details API
+- [PARTIAL] `A4.5` product filters API behavior
+- [PENDING] `A4.6` search API behavior
+- [DONE] `A4.7` admin catalog CRUD APIs if API-driven screens are used
 
 ### A5. Inventory APIs
 
-- `A5.1` stock visibility API for admin
-- `A5.2` inventory adjustment API
-- `A5.3` inventory history API
-- `A5.4` low-stock data API
+- [PENDING] `A5.1` stock visibility API for admin
+- [DONE] `A5.2` inventory adjustment API
+- [PENDING] `A5.3` inventory history API
+- [DONE] `A5.4` low-stock data API
 
 ### A6. Customer APIs
 
-- `A6.1` customer profile API
-- `A6.2` customer address CRUD APIs
-- `A6.3` customer order history API
-- `A6.4` admin customer management APIs
+- [DONE] `A6.1` customer profile API
+- [DONE] `A6.2` customer address CRUD APIs
+- [DONE] `A6.3` customer order history API
+- [DONE] `A6.4` admin customer management APIs
 
 ### A7. Cart APIs
 
-- `A7.1` create/recover cart API
-- `A7.2` add item API
-- `A7.3` update quantity API
-- `A7.4` remove item API
-- `A7.5` cart summary API
-- `A7.6` merge cart API
+- [DONE] `A7.1` create/recover cart API
+- [DONE] `A7.2` add item API
+- [DONE] `A7.3` update quantity API
+- [DONE] `A7.4` remove item API
+- [DONE] `A7.5` cart summary API
+- [PENDING] `A7.6` merge cart API
 
 ### A8. Checkout APIs
 
-- `A8.1` checkout validation API
-- `A8.2` shipping options resolution API
-- `A8.3` checkout submit API
-- `A8.4` checkout confirmation/status API
+- [DONE] `A8.1` checkout validation API
+- [DONE] `A8.2` shipping options resolution API
+- [DONE] `A8.3` checkout submit API
+- [PARTIAL] `A8.4` checkout confirmation/status API
 
 ### A9. Order APIs
 
-- `A9.1` order list API for admin
-- `A9.2` order detail API
-- `A9.3` order status update API
-- `A9.4` cancellation API
-- `A9.5` return request APIs
-- `A9.6` customer order tracking API
+- [DONE] `A9.1` order list API for admin
+- [DONE] `A9.2` order detail API
+- [DONE] `A9.3` order status update API
+- [DONE] `A9.4` cancellation API
+- [DONE] `A9.5` return request APIs
+- [PENDING] `A9.6` customer order tracking API
 
 ### A10. Payment APIs
 
-- `A10.1` payment initiation baseline
-- `A10.2` payment status API
-- `A10.3` manual payment update API for admin
-- `A10.4` webhook endpoints
+- [DONE] `A10.1` payment initiation baseline
+- [PARTIAL] `A10.2` payment status API
+- [DONE] `A10.3` manual payment update API for admin
+- [DONE] `A10.4` webhook endpoints
 
 ### A11. Shipping APIs
 
-- `A11.1` delivery zone/rate admin APIs
-- `A11.2` shipment creation/update APIs
-- `A11.3` tracking APIs
-- `A11.4` courier webhook APIs
+- [DONE] `A11.1` delivery zone/rate admin APIs
+- [PARTIAL] `A11.2` shipment creation/update APIs
+- [PARTIAL] `A11.3` tracking APIs
+- [PENDING] `A11.4` courier webhook APIs
 
 ### A12. Reporting APIs
 
-- `A12.1` dashboard KPI API
-- `A12.2` sales report API
-- `A12.3` orders report API
-- `A12.4` inventory report API
-- `A12.5` customer report API
-- `A12.6` export trigger/status APIs
+- [DONE] `A12.1` dashboard KPI API
+- [DONE] `A12.2` sales report API
+- [DONE] `A12.3` orders report API
+- [DONE] `A12.4` inventory report API
+- [DONE] `A12.5` customer report API
+- [PENDING] `A12.6` export trigger/status APIs
 
 ### A13. API Quality And Governance
 
 - `A13.1` request validation coverage
 - `A13.2` resource transformer coverage
-- `A13.3` OpenAPI documentation updates
+- [DONE] `A13.3` OpenAPI documentation updates
 - `A13.4` contract testing
 - `A13.5` API permission matrix validation
 - `A13.6` API performance review for list/search endpoints
@@ -836,107 +856,107 @@ For every admin screen, define:
 
 ### F1. Admin Frontend Foundation
 
-- `F1.1` choose admin rendering strategy
-- `F1.2` create shared admin layout
-- `F1.3` configure local asset strategy
-- `F1.4` create navigation structure
-- `F1.5` create breadcrumb/title pattern
-- `F1.6` create reusable admin page shell
-- `F1.7` define shared UI helpers for cards, tables, badges, forms
+- [DONE] `F1.1` choose admin rendering strategy
+- [DONE] `F1.2` create shared admin layout
+- [PARTIAL] `F1.3` configure local asset strategy
+- [DONE] `F1.4` create navigation structure
+- [DONE] `F1.5` create breadcrumb/title pattern
+- [DONE] `F1.6` create reusable admin page shell
+- [PARTIAL] `F1.7` define shared UI helpers for cards, tables, badges, forms
 
 ### F2. Admin Authentication Screens
 
-- `F2.1` login screen
-- `F2.2` forgot password screen
-- `F2.3` reset password screen
-- `F2.4` session expiration handling
-- `F2.5` unauthorized access screen
+- [DONE] `F2.1` login screen
+- [DONE] `F2.2` forgot password screen
+- [DONE] `F2.3` reset password screen
+- [DONE] `F2.4` session expiration handling
+- [DONE] `F2.5` unauthorized access screen
 
 ### F3. Dashboard
 
-- `F3.1` dashboard layout
-- `F3.2` KPI cards
-- `F3.3` recent activity widgets
-- `F3.4` quick navigation actions
-- `F3.5` low-stock/order/customer summary panels
-- `F3.6` dashboard data loading states
+- [DONE] `F3.1` dashboard layout
+- [DONE] `F3.2` KPI cards
+- [DONE] `F3.3` recent activity widgets
+- [DONE] `F3.4` quick navigation actions
+- [DONE] `F3.5` low-stock/order/customer summary panels
+- [DONE] `F3.6` dashboard data loading states
 
 ### F4. Settings And Platform Controls
 
-- `F4.1` store settings screens
-- `F4.2` branding screens
-- `F4.3` SEO settings screens
-- `F4.4` policy/content management screens
-- `F4.5` module control screens
+- [DONE] `F4.1` store settings screens
+- [DONE] `F4.2` branding screens
+- [DONE] `F4.3` SEO settings screens
+- [DONE] `F4.4` policy/content management screens
+- [DONE] `F4.5` module control screens
 
 ### F5. Category Management
 
-- `F5.1` category list screen
-- `F5.2` category create screen
-- `F5.3` category edit screen
-- `F5.4` hierarchy/reorder UI
-- `F5.5` validation and error presentation
+- [DONE] `F5.1` category list screen
+- [DONE] `F5.2` category create screen
+- [DONE] `F5.3` category edit screen
+- [PARTIAL] `F5.4` hierarchy/reorder UI
+- [DONE] `F5.5` validation and error presentation
 
 ### F6. Product Management
 
-- `F6.1` product list screen
-- `F6.2` product filter/search UI
-- `F6.3` product create screen
-- `F6.4` product edit screen
-- `F6.5` variant management UI
-- `F6.6` media upload/ordering UI
-- `F6.7` publish status controls
-- `F6.8` SEO data fields
+- [DONE] `F6.1` product list screen
+- [DONE] `F6.2` product filter/search UI
+- [DONE] `F6.3` product create screen
+- [DONE] `F6.4` product edit screen
+- [DONE] `F6.5` variant management UI
+- [PARTIAL] `F6.6` media upload/ordering UI
+- [DONE] `F6.7` publish status controls
+- [PARTIAL] `F6.8` SEO data fields
 
 ### F7. Inventory Management
 
-- `F7.1` stock list screen
-- `F7.2` stock adjustment screen
-- `F7.3` inventory history screen
-- `F7.4` low-stock visibility panel
+- [DONE] `F7.1` stock list screen
+- [DONE] `F7.2` stock adjustment screen
+- [DONE] `F7.3` inventory history screen
+- [DONE] `F7.4` low-stock visibility panel
 
 ### F8. Customer Management
 
-- `F8.1` customer list screen
-- `F8.2` customer filter/search UI
-- `F8.3` customer detail screen
-- `F8.4` address management UI
-- `F8.5` tags/notes UI
-- `F8.6` customer order history screen
+- [DONE] `F8.1` customer list screen
+- [DONE] `F8.2` customer filter/search UI
+- [DONE] `F8.3` customer detail screen
+- [DONE] `F8.4` address management UI
+- [DONE] `F8.5` tags/notes UI
+- [DONE] `F8.6` customer order history screen
 
 ### F9. Order Management
 
-- `F9.1` order list screen
-- `F9.2` order filter/search UI
-- `F9.3` order detail timeline
-- `F9.4` status change controls
-- `F9.5` cancellation/return handling screens
-- `F9.6` shipment and tracking UI
-- `F9.7` invoice/packing slip access points
+- [DONE] `F9.1` order list screen
+- [DONE] `F9.2` order filter/search UI
+- [DONE] `F9.3` order detail timeline
+- [DONE] `F9.4` status change controls
+- [DONE] `F9.5` cancellation/return handling screens
+- [DONE] `F9.6` shipment and tracking UI
+- [DONE] `F9.7` invoice/packing slip access points
 
 ### F10. Payment And Shipping Management
 
-- `F10.1` payment status/admin payment controls
-- `F10.2` delivery zones UI
-- `F10.3` shipping rates UI
-- `F10.4` shipment management UI
+- [DONE] `F10.1` payment status/admin payment controls
+- [DONE] `F10.2` delivery zones UI
+- [DONE] `F10.3` shipping rates UI
+- [DONE] `F10.4` shipment management UI
 
 ### F11. Reports And Exports
 
-- `F11.1` sales report screen
-- `F11.2` orders report screen
-- `F11.3` inventory report screen
-- `F11.4` customer report screen
-- `F11.5` export trigger/download UI
+- [DONE] `F11.1` sales report screen
+- [DONE] `F11.2` orders report screen
+- [DONE] `F11.3` inventory report screen
+- [DONE] `F11.4` customer report screen
+- [DONE] `F11.5` export trigger/download UI
 
 ### F12. Admin UX Consistency And Quality
 
-- `F12.1` shared table patterns
-- `F12.2` shared form validation patterns
-- `F12.3` shared confirmation modal/prompt patterns
-- `F12.4` shared status badge conventions
-- `F12.5` responsive admin layout review
-- `F12.6` accessibility baseline review
+- [PARTIAL] `F12.1` shared table patterns
+- [PARTIAL] `F12.2` shared form validation patterns
+- [PARTIAL] `F12.3` shared confirmation modal/prompt patterns
+- [PARTIAL] `F12.4` shared status badge conventions
+- [PARTIAL] `F12.5` responsive admin layout review
+- [PARTIAL] `F12.6` accessibility baseline review
 
 ### Admin Frontend Deliverables
 

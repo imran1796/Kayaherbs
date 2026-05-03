@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Admin Panel') | Ecommerce Admin</title>
     <link rel="stylesheet" href="{{ asset('vendor/adminlte/css/adminlte.css') }}">
+    @include('admin.layouts.toast-styles')
     <style>
         body {
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -102,56 +103,37 @@
                 <li class="nav-item d-none d-md-block">
                     <a href="{{ route('admin.users.index') }}" class="nav-link">Users</a>
                 </li>
+                @can('settings.view')
+                    <li class="nav-item d-none d-md-block">
+                        <a href="{{ route('admin.settings.store-profile.edit') }}" class="nav-link">Settings</a>
+                    </li>
+                @endcan
+                @can('modules.view')
+                    <li class="nav-item d-none d-md-block">
+                        <a href="{{ route('admin.settings.module-toggles.edit') }}" class="nav-link">Modules</a>
+                    </li>
+                @endcan
             </ul>
 
             <ul class="navbar-nav ms-auto">
                 <li class="nav-item">
                     <div class="nav-link topbar-meta">
+                        <span class="topbar-chip d-none d-md-inline-flex">{{ auth()->user()->name }}</span>
                         <span class="topbar-chip">{{ now()->format('d M Y') }}</span>
                         <span class="topbar-chip d-none d-md-inline-flex">Admin Panel</span>
                     </div>
+                </li>
+                <li class="nav-item">
+                    <form method="post" action="{{ route('admin.logout') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="nav-link btn btn-link">Logout</button>
+                    </form>
                 </li>
             </ul>
         </div>
     </nav>
 
-    <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
-        <div class="sidebar-brand">
-            <a href="{{ route('admin.dashboard') }}" class="brand-link">
-                <img
-                    src="{{ asset('vendor/adminlte/assets/img/AdminLTELogo.png') }}"
-                    alt="Admin Logo"
-                    class="brand-image opacity-75 shadow"
-                >
-                <span class="brand-text fw-light">Ecommerce Admin</span>
-            </a>
-        </div>
-
-        <div class="sidebar-wrapper">
-            <nav class="mt-2">
-                <ul
-                    class="nav sidebar-menu flex-column"
-                    data-lte-toggle="treeview"
-                    role="navigation"
-                    aria-label="Main navigation"
-                    data-accordion="false"
-                >
-                    <li class="nav-item">
-                        <a href="{{ route('admin.dashboard') }}" class="nav-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                            <span class="nav-icon app-icon" aria-hidden="true">D</span>
-                            <p>Dashboard</p>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="{{ route('admin.users.index') }}" class="nav-link {{ request()->routeIs('admin.users.*') ? 'active' : '' }}">
-                            <span class="nav-icon app-icon" aria-hidden="true">U</span>
-                            <p>User Management</p>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </aside>
+    @include('admin.layouts.sidebar')
 
     <main class="app-main">
         <div class="app-content-header">
@@ -188,7 +170,9 @@
     </footer>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="{{ asset('vendor/adminlte/js/adminlte.js') }}"></script>
+@include('admin.layouts.toast-scripts')
 @stack('scripts')
 </body>
 </html>

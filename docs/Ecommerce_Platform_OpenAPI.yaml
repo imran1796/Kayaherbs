@@ -1,70 +1,28 @@
 openapi: 3.0.3
 info:
-  title: Modular Ecommerce Platform API
+  title: Ecommerce Platform API
   version: 1.0.0
-  description: >
-    Version 1 API contract for the modular ecommerce platform. The platform is one
-    maintained codebase deployed separately per client with isolated runtime, database,
-    storage, domain, and configuration. The Backend Core application contains the admin
-    panel and exposes this API, while the Storefront is a separate consumer of the API.
-    Single-vendor ecommerce is the default mode. Multi-vendor marketplace capability is
-    optional and controlled by module/package configuration.
+  description: Current implemented API contract for the Laravel ecommerce platform.
 servers:
-  - url: https://api.client-domain.com/api/v1
-    description: Production client deployment
-  - url: https://staging-api.client-domain.com/api/v1
-    description: Staging/UAT client deployment
+  - url: http://localhost:8000/api/v1
+    description: Local Laravel development server
 tags:
   - name: Auth
-  - name: Storefront
-  - name: CartCheckout
+  - name: Catalog
+  - name: Cart
+  - name: Checkout
   - name: Customer
-  - name: Admin
-  - name: Vendor
-  - name: Webhooks
+  - name: Admin Customers
+  - name: Orders
+  - name: Payments
+  - name: Inventory
+  - name: Shipping
+  - name: Reports
+  - name: Settings
+  - name: Users
 security:
   - bearerAuth: []
 paths:
-  /auth/admin/login:
-    post:
-      tags: [Auth]
-      summary: Admin login
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-      responses:
-        "200":
-          description: Authenticated admin
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
-  /auth/customer/login:
-    post:
-      tags: [Auth]
-      summary: Customer login
-      security: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/LoginRequest"
-      responses:
-        "200":
-          description: Authenticated customer
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
-        "401":
-          $ref: "#/components/responses/Unauthorized"
   /auth/customer/register:
     post:
       tags: [Auth]
@@ -78,661 +36,909 @@ paths:
               $ref: "#/components/schemas/RegisterRequest"
       responses:
         "201":
-          description: Registered customer
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/AuthResponse"
-  /auth/logout:
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/customer/login:
     post:
       tags: [Auth]
-      summary: Logout current user
-      responses:
-        "204":
-          description: Logged out
-  /store:
-    get:
-      tags: [Storefront]
-      summary: Get public store configuration
+      summary: Login customer
       security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
       responses:
         "200":
-          description: Store configuration
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Store"
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/customer/password/forgot:
+    post:
+      tags: [Auth]
+      summary: Request customer password reset
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/ForgotPassword"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /auth/customer/password/reset:
+    post:
+      tags: [Auth]
+      summary: Reset customer password
+      security: []
+      requestBody:
+        $ref: "#/components/requestBodies/ResetPassword"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "422":
+          $ref: "#/components/responses/ValidationError"
+  /auth/customer/me:
+    get:
+      tags: [Auth]
+      summary: Get current customer
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /auth/customer/logout:
+    post:
+      tags: [Auth]
+      summary: Logout current customer token
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /auth/customer/logout-all:
+    post:
+      tags: [Auth]
+      summary: Logout all customer tokens
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /catalog/products:
+    get:
+      tags: [Catalog]
+      summary: List public products
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Page"
+        - $ref: "#/components/parameters/PerPage"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /catalog/products/{slug}:
+    get:
+      tags: [Catalog]
+      summary: Show public product
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/Slug"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+        "404":
+          $ref: "#/components/responses/NotFound"
   /categories:
     get:
-      tags: [Storefront]
-      summary: List public product categories
-      security: []
-      parameters:
-        - name: parent_id
-          in: query
-          schema:
-            type: integer
-            nullable: true
-        - name: include_empty
-          in: query
-          schema:
-            type: boolean
-            default: false
+      tags: [Catalog]
+      summary: Admin category list
       responses:
         "200":
-          description: Category list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Category"
+          $ref: "#/components/responses/Success"
+    post:
+      tags: [Catalog]
+      summary: Create category
+      requestBody:
+        $ref: "#/components/requestBodies/Category"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /categories/{id}:
+    get:
+      tags: [Catalog]
+      summary: Show category
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Catalog]
+      summary: Update category
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Category"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Catalog]
+      summary: Delete category
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
   /products:
     get:
-      tags: [Storefront]
-      summary: List/search products
-      security: []
-      parameters:
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/PerPage"
-        - name: q
-          in: query
-          schema: { type: string }
-        - name: category
-          in: query
-          schema: { type: string }
-        - name: sort
-          in: query
-          schema:
-            type: string
-            enum: [latest, price_asc, price_desc, popularity, rating, relevance]
+      tags: [Catalog]
+      summary: Admin product list
       responses:
         "200":
-          description: Product list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProductListResponse"
-  /products/{slug}:
-    get:
-      tags: [Storefront]
-      summary: Get product detail
-      security: []
-      parameters:
-        - name: slug
-          in: path
-          required: true
-          schema: { type: string }
-      responses:
-        "200":
-          description: Product detail
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Product"
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /cart:
-    get:
-      tags: [CartCheckout]
-      summary: Get cart
-      security: []
-      parameters:
-        - $ref: "#/components/parameters/CartToken"
-      responses:
-        "200":
-          description: Current cart
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Cart"
-  /cart/items:
+          $ref: "#/components/responses/Success"
     post:
-      tags: [CartCheckout]
-      summary: Add item to cart
-      security: []
-      parameters:
-        - $ref: "#/components/parameters/CartToken"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddCartItemRequest"
-      responses:
-        "200":
-          description: Updated cart
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Cart"
-  /checkout:
-    post:
-      tags: [CartCheckout]
-      summary: Place order from cart
-      security: []
-      parameters:
-        - $ref: "#/components/parameters/CartToken"
-        - $ref: "#/components/parameters/IdempotencyKey"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CheckoutRequest"
-      responses:
-        "201":
-          description: Order created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/CheckoutResponse"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-  /orders/{orderNumber}:
-    get:
-      tags: [Customer]
-      summary: Get public order status/detail
-      security: []
-      parameters:
-        - name: orderNumber
-          in: path
-          required: true
-          schema: { type: string }
-        - name: phone
-          in: query
-          description: Required for guest order lookup.
-          schema: { type: string }
-      responses:
-        "200":
-          description: Order detail
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-  /customers/me:
-    get:
-      tags: [Customer]
-      summary: Get current customer profile
-      responses:
-        "200":
-          description: Customer profile
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Customer"
-  /customers/me/addresses:
-    get:
-      tags: [Customer]
-      summary: List current customer addresses
-      responses:
-        "200":
-          description: Customer address list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Address"
-    post:
-      tags: [Customer]
-      summary: Create current customer address
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddressInput"
-      responses:
-        "201":
-          description: Address created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Address"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-  /customers/me/addresses/{addressId}:
-    put:
-      tags: [Customer]
-      summary: Update current customer address
-      parameters:
-        - $ref: "#/components/parameters/AddressId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/AddressInput"
-      responses:
-        "200":
-          description: Address updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Address"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-    delete:
-      tags: [Customer]
-      summary: Delete current customer address
-      parameters:
-        - $ref: "#/components/parameters/AddressId"
-      responses:
-        "204":
-          description: Address deleted
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /admin/dashboard:
-    get:
-      tags: [Admin]
-      summary: Get dashboard metrics
-      responses:
-        "200":
-          description: Dashboard metrics
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/DashboardMetrics"
-  /admin/products:
-    get:
-      tags: [Admin]
-      summary: List admin products
-      parameters:
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/PerPage"
-      responses:
-        "200":
-          description: Admin product list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProductListResponse"
-    post:
-      tags: [Admin]
+      tags: [Catalog]
       summary: Create product
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ProductInput"
+        $ref: "#/components/requestBodies/Product"
       responses:
         "201":
-          description: Product created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Product"
-  /admin/products/{productId}:
+          $ref: "#/components/responses/Success"
+  /products/{id}:
+    get:
+      tags: [Catalog]
+      summary: Show product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
     put:
-      tags: [Admin]
+      tags: [Catalog]
       summary: Update product
       parameters:
-        - $ref: "#/components/parameters/ProductId"
+        - $ref: "#/components/parameters/Id"
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ProductInput"
+        $ref: "#/components/requestBodies/Product"
       responses:
         "200":
-          description: Product updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Product"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
+          $ref: "#/components/responses/Success"
     delete:
-      tags: [Admin]
-      summary: Archive/delete product
+      tags: [Catalog]
+      summary: Delete product
       parameters:
-        - $ref: "#/components/parameters/ProductId"
-      responses:
-        "204":
-          description: Product archived or deleted
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /admin/orders:
-    get:
-      tags: [Admin]
-      summary: List admin orders
-      parameters:
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/PerPage"
-        - name: status
-          in: query
-          schema:
-            $ref: "#/components/schemas/OrderStatus"
+        - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: Order list
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/OrderListResponse"
-  /admin/orders/{orderId}/status:
+          $ref: "#/components/responses/Success"
+  /products/{id}/publish:
     post:
-      tags: [Admin]
+      tags: [Catalog]
+      summary: Publish product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /products/{id}/unpublish:
+    post:
+      tags: [Catalog]
+      summary: Unpublish product
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /cart/guest:
+    post:
+      tags: [Cart]
+      summary: Create guest cart
+      security: []
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /cart/guest/{cartToken}:
+    get:
+      tags: [Cart]
+      summary: Show guest cart
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/CartTokenPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Cart]
+      summary: Clear guest cart
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/CartTokenPath"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /cart/guest/{cartToken}/items:
+    post:
+      tags: [Cart]
+      summary: Add guest cart item
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/CartTokenPath"
+      requestBody:
+        $ref: "#/components/requestBodies/CartItem"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /cart/guest/{cartToken}/items/{itemId}:
+    put:
+      tags: [Cart]
+      summary: Update guest cart item
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/CartTokenPath"
+        - $ref: "#/components/parameters/ItemId"
+      requestBody:
+        $ref: "#/components/requestBodies/CartItem"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Cart]
+      summary: Remove guest cart item
+      security: []
+      parameters:
+        - $ref: "#/components/parameters/CartTokenPath"
+        - $ref: "#/components/parameters/ItemId"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customer/cart:
+    get:
+      tags: [Cart]
+      summary: Show customer cart
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Cart]
+      summary: Clear customer cart
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customer/cart/items:
+    post:
+      tags: [Cart]
+      summary: Add customer cart item
+      requestBody:
+        $ref: "#/components/requestBodies/CartItem"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /customer/cart/items/{itemId}:
+    put:
+      tags: [Cart]
+      summary: Update customer cart item
+      parameters:
+        - $ref: "#/components/parameters/ItemId"
+      requestBody:
+        $ref: "#/components/requestBodies/CartItem"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Cart]
+      summary: Remove customer cart item
+      parameters:
+        - $ref: "#/components/parameters/ItemId"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /checkout/validate:
+    post:
+      tags: [Checkout]
+      summary: Validate checkout
+      requestBody:
+        $ref: "#/components/requestBodies/Checkout"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /checkout/submit:
+    post:
+      tags: [Checkout]
+      summary: Submit checkout
+      requestBody:
+        $ref: "#/components/requestBodies/CheckoutSubmit"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+
+  /shipping/zones:
+    get:
+      tags: [Shipping]
+      summary: List delivery zones
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    post:
+      tags: [Shipping]
+      summary: Create delivery zone
+      requestBody:
+        $ref: "#/components/requestBodies/DeliveryZone"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /shipping/zones/{id}:
+    get:
+      tags: [Shipping]
+      summary: Show delivery zone
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Shipping]
+      summary: Update delivery zone
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/DeliveryZone"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Shipping]
+      summary: Delete delivery zone
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /shipping/rates:
+    get:
+      tags: [Shipping]
+      summary: List delivery rates
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    post:
+      tags: [Shipping]
+      summary: Create delivery rate
+      requestBody:
+        $ref: "#/components/requestBodies/DeliveryRate"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /shipping/rates/{id}:
+    get:
+      tags: [Shipping]
+      summary: Show delivery rate
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Shipping]
+      summary: Update delivery rate
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/DeliveryRate"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Shipping]
+      summary: Delete delivery rate
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /customer/profile:
+    get:
+      tags: [Customer]
+      summary: Show customer profile
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Customer]
+      summary: Update customer profile
+      requestBody:
+        $ref: "#/components/requestBodies/Profile"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customer/addresses:
+    get:
+      tags: [Customer]
+      summary: List customer addresses
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    post:
+      tags: [Customer]
+      summary: Create customer address
+      requestBody:
+        $ref: "#/components/requestBodies/Address"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /customer/addresses/{id}:
+    get:
+      tags: [Customer]
+      summary: Show customer address
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Customer]
+      summary: Update customer address
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Address"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    delete:
+      tags: [Customer]
+      summary: Delete customer address
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customer/orders:
+    get:
+      tags: [Customer]
+      summary: Customer order history
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customer/orders/{id}:
+    get:
+      tags: [Customer]
+      summary: Customer order detail
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /customers:
+    get:
+      tags: [Admin Customers]
+      summary: Admin customer list
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customers/{id}:
+    get:
+      tags: [Admin Customers]
+      summary: Admin customer support detail
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customers/{id}/status:
+    patch:
+      tags: [Admin Customers]
+      summary: Update customer status
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/CustomerStatus"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /customers/{id}/notes:
+    post:
+      tags: [Admin Customers]
+      summary: Add internal customer note
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Note"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /customers/{id}/tags:
+    put:
+      tags: [Admin Customers]
+      summary: Replace customer tags
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Tags"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Admin order list
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Admin order detail
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/status:
+    patch:
+      tags: [Orders]
       summary: Update order status
       parameters:
-        - $ref: "#/components/parameters/OrderId"
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/OrderStatus"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/notes:
+    post:
+      tags: [Orders]
+      summary: Add internal order note
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Note"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/cancel:
+    post:
+      tags: [Orders]
+      summary: Cancel order
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Cancel"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/return-requests:
+    post:
+      tags: [Orders]
+      summary: Create order return request
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/ReturnRequest"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/invoice:
+    post:
+      tags: [Orders]
+      summary: Generate order invoice
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/packing-slip:
+    post:
+      tags: [Orders]
+      summary: Generate order packing slip
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /orders/{id}/shipments:
+    post:
+      tags: [Orders]
+      summary: Link shipment to order
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/Shipment"
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+
+  /payments/{id}/status:
+    patch:
+      tags: [Payments]
+      summary: Update payment status
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        $ref: "#/components/requestBodies/PaymentStatus"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /payments/{id}/cod/collect:
+    post:
+      tags: [Payments]
+      summary: Mark COD payment collected
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /payments/webhooks/{provider}:
+    post:
+      tags: [Payments]
+      summary: Payment provider webhook
+      security:
+        - webhookSignature: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [status]
-              properties:
-                status:
-                  $ref: "#/components/schemas/OrderStatus"
-                note:
-                  type: string
+              additionalProperties: true
       responses:
         "200":
-          description: Order status updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Order"
-  /admin/orders/{orderId}/shipments:
+          $ref: "#/components/responses/Success"
+
+  /inventory/variants/{variantId}/adjust:
     post:
-      tags: [Admin]
-      summary: Create or assign shipment for an order
-      parameters:
-        - $ref: "#/components/parameters/OrderId"
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/ShipmentInput"
-      responses:
-        "201":
-          description: Shipment created or assigned
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Shipment"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-  /admin/inventory/adjustments:
-    post:
-      tags: [Admin]
+      tags: [Inventory]
       summary: Adjust inventory stock
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/InventoryAdjustmentRequest"
-      responses:
-        "201":
-          description: Inventory adjustment recorded
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/InventoryMovement"
-  /admin/modules:
-    get:
-      tags: [Admin]
-      summary: List module/package configuration
-      responses:
-        "200":
-          description: Module configuration
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/ModuleConfig"
-  /admin/coupons:
-    get:
-      tags: [Admin]
-      summary: List coupons
       parameters:
-        - $ref: "#/components/parameters/Page"
-        - $ref: "#/components/parameters/PerPage"
+        - $ref: "#/components/parameters/VariantId"
+      requestBody:
+        $ref: "#/components/requestBodies/InventoryQuantity"
       responses:
         "200":
-          description: Coupon list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Coupon"
-                  meta:
-                    $ref: "#/components/schemas/PaginationMeta"
+          $ref: "#/components/responses/Success"
+  /inventory/variants/{variantId}/reserve:
     post:
-      tags: [Admin]
-      summary: Create coupon
+      tags: [Inventory]
+      summary: Reserve inventory stock
+      parameters:
+        - $ref: "#/components/parameters/VariantId"
       requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/CouponInput"
+        $ref: "#/components/requestBodies/InventoryQuantity"
       responses:
-        "201":
-          description: Coupon created
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Coupon"
-        "422":
-          $ref: "#/components/responses/ValidationError"
-  /admin/coupons/{couponId}:
+        "200":
+          $ref: "#/components/responses/Success"
+  /inventory/variants/{variantId}/release:
+    post:
+      tags: [Inventory]
+      summary: Release reserved inventory stock
+      parameters:
+        - $ref: "#/components/parameters/VariantId"
+      requestBody:
+        $ref: "#/components/requestBodies/InventoryQuantity"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /reports/dashboard:
+    get:
+      tags: [Reports]
+      summary: Dashboard KPIs
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /reports/orders:
+    get:
+      tags: [Reports]
+      summary: Orders report
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /reports/sales:
+    get:
+      tags: [Reports]
+      summary: Sales report
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /reports/inventory:
+    get:
+      tags: [Reports]
+      summary: Inventory report
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+  /reports/customers:
+    get:
+      tags: [Reports]
+      summary: Customers report
+      parameters:
+        - $ref: "#/components/parameters/From"
+        - $ref: "#/components/parameters/To"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /settings/store-profile:
+    get:
+      tags: [Settings]
+      summary: Show store profile settings
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
     put:
-      tags: [Admin]
-      summary: Update coupon
-      parameters:
-        - $ref: "#/components/parameters/CouponId"
+      tags: [Settings]
+      summary: Update store profile settings
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CouponInput"
+              type: object
+              additionalProperties: true
       responses:
         "200":
-          description: Coupon updated
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/Coupon"
-        "404":
-          $ref: "#/components/responses/NotFound"
-        "422":
-          $ref: "#/components/responses/ValidationError"
+          $ref: "#/components/responses/Success"
+  /settings/module-toggles:
+    get:
+      tags: [Settings]
+      summary: Show module toggles
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Settings]
+      summary: Update module toggles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+
+  /users:
+    get:
+      tags: [Users]
+      summary: Admin user list
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    post:
+      tags: [Users]
+      summary: Create admin user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Success"
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Show admin user
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
+    put:
+      tags: [Users]
+      summary: Update admin user
+      parameters:
+        - $ref: "#/components/parameters/Id"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Success"
     delete:
-      tags: [Admin]
-      summary: Disable or delete coupon
+      tags: [Users]
+      summary: Delete admin user
       parameters:
-        - $ref: "#/components/parameters/CouponId"
-      responses:
-        "204":
-          description: Coupon disabled or deleted
-        "404":
-          $ref: "#/components/responses/NotFound"
-  /admin/vendors:
-    get:
-      tags: [Admin, Vendor]
-      summary: List vendors
-      description: Requires multi-vendor module.
+        - $ref: "#/components/parameters/Id"
       responses:
         "200":
-          description: Vendor list
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/Vendor"
-  /vendor/products:
-    get:
-      tags: [Vendor]
-      summary: List current vendor products
-      description: Requires multi-vendor module and vendor role.
-      responses:
-        "200":
-          description: Vendor products
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/ProductListResponse"
-  /vendor/orders:
-    get:
-      tags: [Vendor]
-      summary: List current vendor order groups
-      description: Requires multi-vendor module and vendor role.
-      responses:
-        "200":
-          description: Vendor order groups
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  data:
-                    type: array
-                    items:
-                      $ref: "#/components/schemas/VendorOrderGroup"
-  /webhooks/payment/{provider}:
-    post:
-      tags: [Webhooks]
-      summary: Payment gateway webhook
-      description: Webhook processing must be idempotent.
-      security:
-        - webhookSignature: []
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [bkash, nagad, rocket, sslcommerz, shurjopay]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebhookPayload"
-      responses:
-        "200":
-          description: Webhook accepted
-  /webhooks/courier/{provider}:
-    post:
-      tags: [Webhooks]
-      summary: Courier status webhook
-      description: Webhook processing must be idempotent.
-      security:
-        - webhookSignature: []
-      parameters:
-        - name: provider
-          in: path
-          required: true
-          schema:
-            type: string
-            enum: [pathao, steadfast, redx, ecourier, manual]
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: "#/components/schemas/WebhookPayload"
-      responses:
-        "200":
-          description: Webhook accepted
+          $ref: "#/components/responses/Success"
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      bearerFormat: JWT
+      bearerFormat: Sanctum token
     webhookSignature:
       type: apiKey
       in: header
       name: X-Webhook-Signature
   parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+    ItemId:
+      name: itemId
+      in: path
+      required: true
+      schema:
+        type: integer
+    VariantId:
+      name: variantId
+      in: path
+      required: true
+      schema:
+        type: integer
+    Slug:
+      name: slug
+      in: path
+      required: true
+      schema:
+        type: string
+    CartTokenPath:
+      name: cartToken
+      in: path
+      required: true
+      schema:
+        type: string
     Page:
       name: page
       in: query
       schema:
         type: integer
-        minimum: 1
         default: 1
     PerPage:
       name: per_page
       in: query
       schema:
         type: integer
-        minimum: 1
-        maximum: 100
-        default: 20
-    CartToken:
-      name: X-Cart-Token
-      in: header
-      required: false
-      description: Guest cart token. Authenticated customers may omit it.
+        default: 15
+    From:
+      name: from
+      in: query
       schema:
         type: string
-    IdempotencyKey:
-      name: Idempotency-Key
-      in: header
-      required: false
-      description: Recommended for checkout and payment-sensitive requests.
+        format: date
+    To:
+      name: to
+      in: query
       schema:
         type: string
-    OrderId:
-      name: orderId
-      in: path
-      required: true
-      schema:
-        type: integer
-    ProductId:
-      name: productId
-      in: path
-      required: true
-      schema:
-        type: integer
-    AddressId:
-      name: addressId
-      in: path
-      required: true
-      schema:
-        type: integer
-    CouponId:
-      name: couponId
-      in: path
-      required: true
-      schema:
-        type: integer
+        format: date
   responses:
+    Success:
+      description: Successful API response
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ApiResponse"
     Unauthorized:
       description: Unauthorized
       content:
@@ -751,18 +957,356 @@ components:
         application/json:
           schema:
             $ref: "#/components/schemas/ValidationErrorResponse"
+  requestBodies:
+    ForgotPassword:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email]
+            properties:
+              email:
+                type: string
+                format: email
+    ResetPassword:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [email, token, password, password_confirmation]
+            properties:
+              email:
+                type: string
+                format: email
+              token:
+                type: string
+              password:
+                type: string
+              password_confirmation:
+                type: string
+    Profile:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name, email]
+            properties:
+              name:
+                type: string
+              email:
+                type: string
+                format: email
+              phone:
+                type: string
+                nullable: true
+    Address:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/AddressInput"
+    Category:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+    Product:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: true
+    CartItem:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: integer
+              product_variant_id:
+                type: integer
+                nullable: true
+              quantity:
+                type: integer
+                minimum: 1
+    Checkout:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              shipping_address_id:
+                type: integer
+                nullable: true
+              shipping_address:
+                $ref: "#/components/schemas/AddressInput"
+              billing_same_as_shipping:
+                type: boolean
+                default: true
+              billing_address_id:
+                type: integer
+                nullable: true
+              billing_address:
+                $ref: "#/components/schemas/AddressInput"
+              shipping_method:
+                type: string
+                example: standard
+              payment_method:
+                type: string
+                example: cod
+    CheckoutSubmit:
+      required: true
+      content:
+        application/json:
+          schema:
+            allOf:
+              - type: object
+                required: [idempotency_key]
+                properties:
+                  idempotency_key:
+                    type: string
+                    maxLength: 120
+                    example: checkout-001
+              - $ref: "#/components/requestBodies/Checkout/content/application~1json/schema"
+    DeliveryZone:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [name]
+            properties:
+              name:
+                type: string
+              code:
+                type: string
+                example: dhaka-city
+              country:
+                type: string
+                example: BD
+              states:
+                type: array
+                nullable: true
+                items:
+                  type: string
+              cities:
+                type: array
+                nullable: true
+                items:
+                  type: string
+              postal_codes:
+                type: array
+                nullable: true
+                items:
+                  type: string
+              status:
+                type: string
+                enum: [active, inactive]
+              sort_order:
+                type: integer
+    DeliveryRate:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [delivery_zone_id, name, amount]
+            properties:
+              delivery_zone_id:
+                type: integer
+              name:
+                type: string
+              code:
+                type: string
+                example: inside-dhaka
+              amount:
+                type: number
+                format: float
+              min_order_amount:
+                type: number
+                nullable: true
+              max_order_amount:
+                type: number
+                nullable: true
+              status:
+                type: string
+                enum: [active, inactive]
+              sort_order:
+                type: integer
+    CustomerStatus:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [active, inactive, suspended]
+    OrderStatus:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                $ref: "#/components/schemas/OrderStatusValue"
+              note:
+                type: string
+                nullable: true
+              metadata:
+                type: object
+                additionalProperties: true
+    PaymentStatus:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status]
+            properties:
+              status:
+                type: string
+                enum: [pending, authorized, paid, failed, cancelled, refunded]
+              transaction_id:
+                type: string
+                nullable: true
+              provider_reference:
+                type: string
+                nullable: true
+              metadata:
+                type: object
+                additionalProperties: true
+    Note:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [note]
+            properties:
+              note:
+                type: string
+              metadata:
+                type: object
+                additionalProperties: true
+    Tags:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [tags]
+            properties:
+              tags:
+                type: array
+                items:
+                  type: string
+    Cancel:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [reason]
+            properties:
+              reason:
+                type: string
+              metadata:
+                type: object
+                additionalProperties: true
+    ReturnRequest:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [reason]
+            properties:
+              reason:
+                type: string
+              metadata:
+                type: object
+                additionalProperties: true
+    Shipment:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [carrier_name]
+            properties:
+              carrier_name:
+                type: string
+              tracking_number:
+                type: string
+                nullable: true
+              tracking_url:
+                type: string
+                nullable: true
+              status:
+                type: string
+                enum: [pending, shipped]
+              metadata:
+                type: object
+                additionalProperties: true
+    InventoryQuantity:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [quantity]
+            properties:
+              quantity:
+                type: integer
+              reason:
+                type: string
+              note:
+                type: string
+                nullable: true
   schemas:
-    ErrorResponse:
+    ApiResponse:
       type: object
-      required: [message]
       properties:
+        success:
+          type: boolean
         message:
           type: string
+        data:
+          nullable: true
+        meta:
+          type: object
+          additionalProperties: true
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties: true
         code:
           type: string
+          nullable: true
     ValidationErrorResponse:
       type: object
-      required: [message, errors]
       properties:
         message:
           type: string
@@ -772,645 +1316,73 @@ components:
             type: array
             items:
               type: string
-    PaginationMeta:
-      type: object
-      properties:
-        current_page:
-          type: integer
-        per_page:
-          type: integer
-        total:
-          type: integer
-        last_page:
-          type: integer
-    LoginRequest:
-      type: object
-      required: [identifier, password]
-      properties:
-        identifier:
-          type: string
-          description: Email or phone.
-        password:
-          type: string
-          format: password
     RegisterRequest:
       type: object
-      required: [name, phone, password]
+      required: [name, email, password, password_confirmation]
       properties:
         name:
           type: string
+        email:
+          type: string
+          format: email
         phone:
           type: string
+          nullable: true
+        password:
+          type: string
+        password_confirmation:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
         email:
           type: string
           format: email
         password:
           type: string
-          format: password
-    AuthResponse:
-      type: object
-      required: [access_token, token_type, user]
-      properties:
-        access_token:
-          type: string
-        token_type:
-          type: string
-          example: Bearer
-        user:
-          $ref: "#/components/schemas/User"
-    User:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        email:
-          type: string
-          nullable: true
-        phone:
-          type: string
-          nullable: true
-        role:
-          type: string
-    Store:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        domain:
-          type: string
-        currency:
-          type: string
-          example: BDT
-        timezone:
-          type: string
-          example: Asia/Dhaka
-        commerce_mode:
-          type: string
-          enum: [single_vendor, multi_vendor]
-        enabled_modules:
-          type: array
-          items:
-            type: string
-    Category:
-      type: object
-      properties:
-        id:
-          type: integer
-        parent_id:
-          type: integer
-          nullable: true
-        name:
-          type: string
-        slug:
-          type: string
-        image:
-          type: string
-          nullable: true
-        sort_order:
-          type: integer
-        product_count:
-          type: integer
-        children:
-          type: array
-          items:
-            $ref: "#/components/schemas/Category"
-    ProductListResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Product"
-        meta:
-          $ref: "#/components/schemas/PaginationMeta"
-    Product:
-      type: object
-      properties:
-        id:
-          type: integer
-        vendor_id:
-          type: integer
-          nullable: true
-          description: Present when multi-vendor mode is enabled.
-        name:
-          type: string
-        slug:
-          type: string
-        sku:
-          type: string
-          nullable: true
-        price:
-          type: number
-        offer_price:
-          type: number
-          nullable: true
-        stock_status:
-          type: string
-          enum: [in_stock, low_stock, out_of_stock]
-        description:
-          type: string
-          nullable: true
-        images:
-          type: array
-          items:
-            type: string
-        variants:
-          type: array
-          items:
-            $ref: "#/components/schemas/ProductVariant"
-        seo:
-          $ref: "#/components/schemas/SeoFields"
-        compliance_fields:
-          $ref: "#/components/schemas/ProductComplianceFields"
-    ProductVariant:
-      type: object
-      properties:
-        id:
-          type: integer
-        sku:
-          type: string
-        name:
-          type: string
-        price:
-          type: number
-        offer_price:
-          type: number
-          nullable: true
-        stock_quantity:
-          type: integer
-        attributes:
-          type: object
-          additionalProperties:
-            type: string
-    ProductInput:
-      type: object
-      required: [name, price, category_id]
-      properties:
-        name:
-          type: string
-        category_id:
-          type: integer
-        sku:
-          type: string
-        price:
-          type: number
-        offer_price:
-          type: number
-          nullable: true
-        description:
-          type: string
-        status:
-          type: string
-          enum: [draft, published, archived]
-        seo:
-          $ref: "#/components/schemas/SeoFields"
-        compliance_fields:
-          $ref: "#/components/schemas/ProductComplianceFields"
-    SeoFields:
-      type: object
-      properties:
-        meta_title:
-          type: string
-          nullable: true
-        meta_description:
-          type: string
-          nullable: true
-        canonical_url:
-          type: string
-          nullable: true
-        image_alt:
-          type: string
-          nullable: true
-    ProductComplianceFields:
-      type: object
-      properties:
-        ingredients:
-          type: string
-          nullable: true
-        usage_instructions:
-          type: string
-          nullable: true
-        warning:
-          type: string
-          nullable: true
-        certification:
-          type: string
-          nullable: true
-        license_number:
-          type: string
-          nullable: true
-        expiry_date:
-          type: string
-          format: date
-          nullable: true
-        batch_number:
-          type: string
-          nullable: true
-    Cart:
-      type: object
-      properties:
-        token:
-          type: string
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/CartItem"
-        subtotal:
-          type: number
-        discount_total:
-          type: number
-        delivery_charge:
-          type: number
-        total:
-          type: number
-    CartItem:
-      type: object
-      properties:
-        id:
-          type: string
-        product_id:
-          type: integer
-        variant_id:
-          type: integer
-          nullable: true
-        name:
-          type: string
-        quantity:
-          type: integer
-        unit_price:
-          type: number
-        line_total:
-          type: number
-    AddCartItemRequest:
-      type: object
-      required: [product_id, quantity]
-      properties:
-        product_id:
-          type: integer
-        variant_id:
-          type: integer
-          nullable: true
-        quantity:
-          type: integer
-          minimum: 1
-    CheckoutRequest:
-      type: object
-      required: [customer, address, payment_method]
-      properties:
-        customer:
-          $ref: "#/components/schemas/CheckoutCustomer"
-        address:
-          $ref: "#/components/schemas/AddressInput"
-        coupon_code:
-          type: string
-          nullable: true
-        payment_method:
-          type: string
-          enum: [cod, bkash, nagad, rocket, sslcommerz, shurjopay, bank_transfer]
-        order_note:
-          type: string
-          nullable: true
-    CheckoutCustomer:
-      type: object
-      required: [name, phone]
-      properties:
-        name:
-          type: string
-        phone:
-          type: string
-        email:
-          type: string
-          format: email
-          nullable: true
-    CheckoutResponse:
-      type: object
-      properties:
-        order:
-          $ref: "#/components/schemas/Order"
-        payment_redirect_url:
-          type: string
-          nullable: true
     AddressInput:
       type: object
-      required: [name, phone, line1, city, zone]
+      required: [recipient_name, phone, address_line_1, city, country]
       properties:
-        name:
+        label:
+          type: string
+          nullable: true
+        recipient_name:
           type: string
         phone:
           type: string
-        line1:
+        address_line_1:
           type: string
-        line2:
+        address_line_2:
           type: string
           nullable: true
         city:
           type: string
-        zone:
+        state:
           type: string
+          nullable: true
         postal_code:
           type: string
           nullable: true
-        label:
+        country:
           type: string
-          nullable: true
-        is_default:
+          example: BD
+        is_default_shipping:
           type: boolean
-          default: false
-    Address:
-      allOf:
-        - type: object
-          properties:
-            id:
-              type: integer
-        - $ref: "#/components/schemas/AddressInput"
-    Customer:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        phone:
-          type: string
-        email:
-          type: string
-          nullable: true
-        total_orders:
-          type: integer
-        total_spend:
-          type: number
-    OrderStatus:
+        is_default_billing:
+          type: boolean
+    OrderStatusValue:
       type: string
       enum:
         - pending
-        - awaiting_confirmation
         - confirmed
         - processing
         - packed
         - shipped
         - delivered
-        - cancelled
+        - failed_delivery
         - return_requested
         - returned
         - refunded
-        - failed_delivery
-    PaymentStatus:
-      type: string
-      enum: [unpaid, pending, paid, failed, refunded, partially_refunded]
-    OrderListResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: "#/components/schemas/Order"
-        meta:
-          $ref: "#/components/schemas/PaginationMeta"
-    Order:
-      type: object
-      properties:
-        id:
-          type: integer
-        order_number:
-          type: string
-        status:
-          $ref: "#/components/schemas/OrderStatus"
-        payment_status:
-          $ref: "#/components/schemas/PaymentStatus"
-        payment_method:
-          type: string
-        customer:
-          $ref: "#/components/schemas/Customer"
-        address:
-          $ref: "#/components/schemas/Address"
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/OrderItem"
-        subtotal:
-          type: number
-        discount_total:
-          type: number
-        delivery_charge:
-          type: number
-        total:
-          type: number
-        created_at:
-          type: string
-          format: date-time
-    OrderItem:
-      type: object
-      properties:
-        id:
-          type: integer
-        vendor_id:
-          type: integer
-          nullable: true
-        product_id:
-          type: integer
-        variant_id:
-          type: integer
-          nullable: true
-        name:
-          type: string
-        sku:
-          type: string
-        quantity:
-          type: integer
-        unit_price:
-          type: number
-        line_total:
-          type: number
-    ShipmentInput:
-      type: object
-      required: [courier]
-      properties:
-        courier:
-          type: string
-          enum: [pathao, steadfast, redx, ecourier, manual]
-        service_type:
-          type: string
-          nullable: true
-        tracking_id:
-          type: string
-          nullable: true
-        note:
-          type: string
-          nullable: true
-    Shipment:
-      type: object
-      properties:
-        id:
-          type: integer
-        order_id:
-          type: integer
-        courier:
-          type: string
-        tracking_id:
-          type: string
-          nullable: true
-        tracking_url:
-          type: string
-          nullable: true
-        status:
-          type: string
-          enum: [pending, booked, manual_assigned, picked_up, in_transit, delivered, failed, returned]
-        created_at:
-          type: string
-          format: date-time
-    InventoryAdjustmentRequest:
-      type: object
-      required: [product_id, quantity_delta, reason]
-      properties:
-        product_id:
-          type: integer
-        variant_id:
-          type: integer
-          nullable: true
-        quantity_delta:
-          type: integer
-          description: Positive for stock-in, negative for stock-out.
-        reason:
-          type: string
-        note:
-          type: string
-          nullable: true
-    InventoryMovement:
-      type: object
-      properties:
-        id:
-          type: integer
-        product_id:
-          type: integer
-        variant_id:
-          type: integer
-          nullable: true
-        quantity_delta:
-          type: integer
-        reason:
-          type: string
-        created_at:
-          type: string
-          format: date-time
-    ModuleConfig:
-      type: object
-      properties:
-        key:
-          type: string
-          example: multi_vendor
-        name:
-          type: string
-        enabled:
-          type: boolean
-        package:
-          type: string
-          example: enterprise
-    CouponInput:
-      type: object
-      required: [code, type, value]
-      properties:
-        code:
-          type: string
-        type:
-          type: string
-          enum: [fixed_amount, percentage, free_delivery]
-        value:
-          type: number
-        min_order_amount:
-          type: number
-          nullable: true
-        max_discount_amount:
-          type: number
-          nullable: true
-        starts_at:
-          type: string
-          format: date-time
-          nullable: true
-        ends_at:
-          type: string
-          format: date-time
-          nullable: true
-        usage_limit:
-          type: integer
-          nullable: true
-        status:
-          type: string
-          enum: [active, inactive, expired]
-    Coupon:
-      allOf:
-        - type: object
-          properties:
-            id:
-              type: integer
-            used_count:
-              type: integer
-            created_at:
-              type: string
-              format: date-time
-        - $ref: "#/components/schemas/CouponInput"
-    WebhookPayload:
-      type: object
-      description: Provider-specific signed webhook payload retained raw for verification and audit.
-      additionalProperties: true
-    DashboardMetrics:
-      type: object
-      properties:
-        gross_sales:
-          type: number
-        net_sales:
-          type: number
-        total_orders:
-          type: integer
-        pending_orders:
-          type: integer
-        delivered_orders:
-          type: integer
-        cancelled_orders:
-          type: integer
-        cod_pending_amount:
-          type: number
-        low_stock_count:
-          type: integer
-    Vendor:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        phone:
-          type: string
-        email:
-          type: string
-          nullable: true
-        commission_rate:
-          type: number
-          nullable: true
-        status:
-          type: string
-          enum: [pending, approved, suspended, rejected]
-    VendorOrderGroup:
-      type: object
-      properties:
-        vendor_id:
-          type: integer
-        order_id:
-          type: integer
-        order_number:
-          type: string
-        status:
-          $ref: "#/components/schemas/OrderStatus"
-        items:
-          type: array
-          items:
-            $ref: "#/components/schemas/OrderItem"
-        vendor_subtotal:
-          type: number
-        commission_amount:
-          type: number
-        payout_amount:
-          type: number
+        - cancelled

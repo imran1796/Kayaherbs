@@ -1,0 +1,246 @@
+{
+  "info": {
+    "_postman_id": "b08f4b0a-4c8e-4f02-9d2b-ecommerce-platform-api",
+    "name": "Ecommerce Platform API",
+    "description": "Upload-ready Postman collection for the implemented Laravel ecommerce API. Set base_url to http://localhost:8000/api/v1, then use customer_token or admin_token as needed.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{customer_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth - Customer",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "description": "Customer role is not sent by the client. The API automatically creates the user as a non-admin customer and assigns the customer role.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"phone\": \"+8801700000000\",\n  \"password\": \"Password123\",\n  \"password_confirmation\": \"Password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/customer/register"
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"Password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/customer/login"
+          }
+        },
+        {
+          "name": "Forgot Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\"\n}"
+            },
+            "url": "{{base_url}}/auth/customer/password/forgot"
+          }
+        },
+        {
+          "name": "Reset Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"token\": \"reset-token\",\n  \"password\": \"Password123\",\n  \"password_confirmation\": \"Password123\"\n}"
+            },
+            "url": "{{base_url}}/auth/customer/password/reset"
+          }
+        },
+        {
+          "name": "Me",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": "{{base_url}}/auth/customer/me"
+          }
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": "{{base_url}}/auth/customer/logout"
+          }
+        },
+        {
+          "name": "Logout All",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Authorization", "value": "Bearer {{customer_token}}" }
+            ],
+            "url": "{{base_url}}/auth/customer/logout-all"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Catalog",
+      "item": [
+        { "name": "Public Product List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/catalog/products" } },
+        { "name": "Public Product Detail", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/catalog/products/{{product_slug}}" } },
+        { "name": "Admin Category List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/categories" } },
+        { "name": "Admin Create Category", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Herbs\",\n  \"slug\": \"herbs\",\n  \"status\": \"active\"\n}" }, "url": "{{base_url}}/categories" } },
+        { "name": "Admin Product List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/products" } },
+        { "name": "Admin Create Product", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"category_id\": {{category_id}},\n  \"name\": \"Neem Oil\",\n  \"slug\": \"neem-oil\",\n  \"sku\": \"NEEM-001\",\n  \"price\": 250,\n  \"status\": \"draft\"\n}" }, "url": "{{base_url}}/products" } }
+      ]
+    },
+    {
+      "name": "Cart",
+      "item": [
+        { "name": "Create Guest Cart", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/cart/guest" } },
+        { "name": "Show Guest Cart", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }], "url": "{{base_url}}/cart/guest/{{cart_token}}" } },
+        { "name": "Add Guest Cart Item", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"product_id\": {{product_id}},\n  \"product_variant_id\": {{variant_id}},\n  \"quantity\": 1\n}" }, "url": "{{base_url}}/cart/guest/{{cart_token}}/items" } },
+        { "name": "Show Customer Cart", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }], "url": "{{base_url}}/customer/cart" } },
+        { "name": "Add Customer Cart Item", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"product_id\": {{product_id}},\n  \"product_variant_id\": {{variant_id}},\n  \"quantity\": 1\n}" }, "url": "{{base_url}}/customer/cart/items" } }
+      ]
+    },
+    {
+      "name": "Customer Account",
+      "item": [
+        { "name": "Profile", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }], "url": "{{base_url}}/customer/profile" } },
+        { "name": "Update Profile", "request": { "method": "PUT", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"John Updated\",\n  \"email\": \"john.updated@example.com\",\n  \"phone\": \"+8801700000000\"\n}" }, "url": "{{base_url}}/customer/profile" } },
+        { "name": "Address List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }], "url": "{{base_url}}/customer/addresses" } },
+        { "name": "Create Address", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"label\": \"Home\",\n  \"recipient_name\": \"John Doe\",\n  \"phone\": \"01700000000\",\n  \"address_line_1\": \"Road 1, House 2\",\n  \"city\": \"Dhaka\",\n  \"state\": \"Dhaka\",\n  \"postal_code\": \"1207\",\n  \"country\": \"BD\",\n  \"is_default_shipping\": true,\n  \"is_default_billing\": true\n}" }, "url": "{{base_url}}/customer/addresses" } },
+        { "name": "Customer Order History", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }], "url": "{{base_url}}/customer/orders" } },
+        { "name": "Customer Order Detail", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }], "url": "{{base_url}}/customer/orders/{{order_id}}" } }
+      ]
+    },
+    {
+      "name": "Checkout",
+      "item": [
+        { "name": "Validate Checkout", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"shipping_address_id\": {{address_id}},\n  \"billing_address_id\": {{address_id}},\n  \"billing_same_as_shipping\": true,\n  \"shipping_method\": \"standard\",\n  \"payment_method\": \"cod\"\n}" }, "url": "{{base_url}}/checkout/validate" } },
+        { "name": "Submit Checkout", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{customer_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"shipping_address_id\": {{address_id}},\n  \"billing_address_id\": {{address_id}},\n  \"billing_same_as_shipping\": true,\n  \"shipping_method\": \"standard\",\n  \"payment_method\": \"cod\",\n  \"idempotency_key\": \"{{idempotency_key}}\"\n}" }, "url": "{{base_url}}/checkout/submit" } }
+      ]
+    },
+    {
+      "name": "Shipping",
+      "item": [
+        { "name": "Delivery Zone List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/shipping/zones" } },
+        { "name": "Create Delivery Zone", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dhaka City\",\n  \"code\": \"dhaka-city\",\n  \"country\": \"BD\",\n  \"cities\": [\"Dhaka\"],\n  \"status\": \"active\",\n  \"sort_order\": 1\n}" }, "url": "{{base_url}}/shipping/zones" } },
+        { "name": "Delivery Zone Detail", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/shipping/zones/{{delivery_zone_id}}" } },
+        { "name": "Update Delivery Zone", "request": { "method": "PUT", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"name\": \"Dhaka City\",\n  \"code\": \"dhaka-city\",\n  \"country\": \"BD\",\n  \"cities\": [\"Dhaka\"],\n  \"status\": \"active\",\n  \"sort_order\": 1\n}" }, "url": "{{base_url}}/shipping/zones/{{delivery_zone_id}}" } },
+        { "name": "Delete Delivery Zone", "request": { "method": "DELETE", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/shipping/zones/{{delivery_zone_id}}" } },
+        { "name": "Delivery Rate List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/shipping/rates" } },
+        { "name": "Create Delivery Rate", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"delivery_zone_id\": {{delivery_zone_id}},\n  \"name\": \"Inside Dhaka\",\n  \"code\": \"inside-dhaka\",\n  \"amount\": 60,\n  \"status\": \"active\",\n  \"sort_order\": 1\n}" }, "url": "{{base_url}}/shipping/rates" } },
+        { "name": "Delivery Rate Detail", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/shipping/rates/{{delivery_rate_id}}" } },
+        { "name": "Update Delivery Rate", "request": { "method": "PUT", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"delivery_zone_id\": {{delivery_zone_id}},\n  \"name\": \"Inside Dhaka\",\n  \"code\": \"inside-dhaka\",\n  \"amount\": 60,\n  \"status\": \"active\",\n  \"sort_order\": 1\n}" }, "url": "{{base_url}}/shipping/rates/{{delivery_rate_id}}" } },
+        { "name": "Delete Delivery Rate", "request": { "method": "DELETE", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/shipping/rates/{{delivery_rate_id}}" } }
+      ]
+    },
+    {
+      "name": "Admin Customers",
+      "item": [
+        { "name": "Customer List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/customers" } },
+        { "name": "Customer Support Detail", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/customers/{{customer_id}}" } },
+        { "name": "Update Customer Status", "request": { "method": "PATCH", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"suspended\"\n}" }, "url": "{{base_url}}/customers/{{customer_id}}/status" } },
+        { "name": "Add Customer Note", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"note\": \"Customer prefers phone support.\",\n  \"metadata\": {\n    \"source\": \"call\"\n  }\n}" }, "url": "{{base_url}}/customers/{{customer_id}}/notes" } },
+        { "name": "Sync Customer Tags", "request": { "method": "PUT", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"tags\": [\"vip\", \"fragile-delivery\"]\n}" }, "url": "{{base_url}}/customers/{{customer_id}}/tags" } }
+      ]
+    },
+    {
+      "name": "Admin Orders",
+      "item": [
+        { "name": "Order List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/orders" } },
+        { "name": "Order Detail", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/orders/{{order_id}}" } },
+        { "name": "Update Order Status", "request": { "method": "PATCH", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"confirmed\",\n  \"note\": \"Checked by admin.\"\n}" }, "url": "{{base_url}}/orders/{{order_id}}/status" } },
+        { "name": "Add Order Note", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"note\": \"Deliver after 6 PM.\",\n  \"metadata\": {\n    \"source\": \"phone\"\n  }\n}" }, "url": "{{base_url}}/orders/{{order_id}}/notes" } },
+        { "name": "Cancel Order", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Customer requested cancellation.\"\n}" }, "url": "{{base_url}}/orders/{{order_id}}/cancel" } },
+        { "name": "Create Return Request", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"reason\": \"Damaged item reported.\"\n}" }, "url": "{{base_url}}/orders/{{order_id}}/return-requests" } },
+        { "name": "Generate Invoice", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/orders/{{order_id}}/invoice" } },
+        { "name": "Generate Packing Slip", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/orders/{{order_id}}/packing-slip" } },
+        { "name": "Link Shipment", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"carrier_name\": \"Pathao\",\n  \"tracking_number\": \"TRK123\",\n  \"tracking_url\": \"https://example.com/track/TRK123\",\n  \"status\": \"pending\"\n}" }, "url": "{{base_url}}/orders/{{order_id}}/shipments" } }
+      ]
+    },
+    {
+      "name": "Payments",
+      "item": [
+        { "name": "Update Payment Status", "request": { "method": "PATCH", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"status\": \"paid\",\n  \"transaction_id\": \"TXN-123\",\n  \"provider_reference\": \"REF-123\"\n}" }, "url": "{{base_url}}/payments/{{payment_id}}/status" } },
+        { "name": "Collect COD", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/payments/{{payment_id}}/cod/collect" } },
+        { "name": "Payment Webhook", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Content-Type", "value": "application/json" }, { "key": "X-Webhook-Signature", "value": "{{webhook_signature}}" }, { "key": "X-Webhook-Event-Id", "value": "{{webhook_event_id}}" }], "body": { "mode": "raw", "raw": "{\n  \"payment_id\": {{payment_id}},\n  \"status\": \"paid\",\n  \"amount\": 160\n}" }, "url": "{{base_url}}/payments/webhooks/{{payment_provider}}" } }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        { "name": "Dashboard KPIs", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/reports/dashboard?from={{report_from}}&to={{report_to}}" } },
+        { "name": "Orders Report", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/reports/orders?from={{report_from}}&to={{report_to}}" } },
+        { "name": "Sales Report", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/reports/sales?from={{report_from}}&to={{report_to}}" } },
+        { "name": "Inventory Report", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/reports/inventory" } },
+        { "name": "Customers Report", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/reports/customers?from={{report_from}}&to={{report_to}}" } }
+      ]
+    },
+    {
+      "name": "Settings, Inventory, Users",
+      "item": [
+        { "name": "Store Profile", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/settings/store-profile" } },
+        { "name": "Module Toggles", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/settings/module-toggles" } },
+        { "name": "Adjust Inventory", "request": { "method": "POST", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }, { "key": "Content-Type", "value": "application/json" }], "body": { "mode": "raw", "raw": "{\n  \"quantity\": 5,\n  \"reason\": \"manual_adjustment\",\n  \"note\": \"Cycle count correction\"\n}" }, "url": "{{base_url}}/inventory/variants/{{variant_id}}/adjust" } },
+        { "name": "User List", "request": { "method": "GET", "header": [{ "key": "Accept", "value": "application/json" }, { "key": "Authorization", "value": "Bearer {{admin_token}}" }], "url": "{{base_url}}/users" } }
+      ]
+    }
+  ],
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "customer_token", "value": "" },
+    { "key": "admin_token", "value": "" },
+    { "key": "cart_token", "value": "" },
+    { "key": "idempotency_key", "value": "checkout-001" },
+    { "key": "product_id", "value": "1" },
+    { "key": "variant_id", "value": "1" },
+    { "key": "product_slug", "value": "neem-oil" },
+    { "key": "category_id", "value": "1" },
+    { "key": "address_id", "value": "1" },
+    { "key": "customer_id", "value": "1" },
+    { "key": "order_id", "value": "1" },
+    { "key": "payment_id", "value": "1" },
+    { "key": "delivery_zone_id", "value": "1" },
+    { "key": "delivery_rate_id", "value": "1" },
+    { "key": "payment_provider", "value": "manual" },
+    { "key": "webhook_signature", "value": "" },
+    { "key": "webhook_event_id", "value": "evt-001" },
+    { "key": "report_from", "value": "2026-04-01" },
+    { "key": "report_to", "value": "2026-04-30" }
+  ]
+}
