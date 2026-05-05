@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\Order;
+use App\Models\Coupon;
+use App\Models\CouponRedemption;
 use App\Models\InventoryStock;
 use App\Models\Product;
 use App\Models\ProductVariant;
@@ -159,6 +161,44 @@ class ReportingDashboardTest extends TestCase
             ->assertJsonPath('data.top_customers.0.total_spent', '350.00');
     }
 
+    public function test_coupon_report_returns_redemption_summary_and_rows(): void
+    {
+        $admin = $this->adminWithPermission('reports.view');
+        $customer = User::factory()->create(['is_admin' => false]);
+        $coupon = Coupon::query()->create([
+            'name' => 'Report Coupon',
+            'code' => 'REPORT10',
+            'discount_type' => Coupon::DISCOUNT_FIXED,
+            'discount_value' => 100,
+            'status' => Coupon::STATUS_ACTIVE,
+            'used_count' => 2,
+        ]);
+
+        CouponRedemption::query()->create([
+            'coupon_id' => $coupon->id,
+            'user_id' => $customer->id,
+            'discount_amount' => '100.00',
+            'redeemed_at' => '2026-04-02 10:00:00',
+        ]);
+        CouponRedemption::query()->create([
+            'coupon_id' => $coupon->id,
+            'user_id' => $customer->id,
+            'discount_amount' => '50.00',
+            'redeemed_at' => '2026-04-03 10:00:00',
+        ]);
+
+        $this->withToken($admin->createToken('admin-api')->plainTextToken)
+            ->getJson('/api/v1/reports/coupons?from=2026-04-01&to=2026-04-30')
+            ->assertOk()
+            ->assertJsonPath('data.summary.total_coupons', 1)
+            ->assertJsonPath('data.summary.active_coupons', 1)
+            ->assertJsonPath('data.summary.total_redemptions', 2)
+            ->assertJsonPath('data.summary.total_discount', '150.00')
+            ->assertJsonPath('data.coupons.0.code', 'REPORT10')
+            ->assertJsonPath('data.coupons.0.redemptions_count', 2)
+            ->assertJsonPath('data.coupons.0.discount_total', '150.00');
+    }
+
     public function test_admin_can_view_sales_report_screen(): void
     {
         $admin = $this->adminWithPermission('reports.view');
@@ -277,6 +317,7 @@ class ReportingDashboardTest extends TestCase
             'admin.reports.inventory.data',
             'admin.reports.customers',
             'admin.reports.customers.data',
+            'admin.reports.coupons.data',
             'admin.reports.export',
         ] as $routeName) {
             $middleware = $this->middlewareFor($routeName);

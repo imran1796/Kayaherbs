@@ -4,6 +4,7 @@ namespace App\Modules\Cart\Controllers;
 
 use App\Core\Support\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Modules\Cart\Requests\ApplyCouponRequest;
 use App\Modules\Cart\Requests\StoreGuestCartItemRequest;
 use App\Modules\Cart\Requests\UpdateGuestCartItemRequest;
 use App\Modules\Cart\Resources\CartResource;
@@ -67,6 +68,22 @@ class GuestCartController extends Controller
         return ApiResponse::success(
             new CartResource($this->carts->clearGuestCart($cartToken)),
             'Guest cart cleared successfully.'
+        );
+    }
+
+    public function applyCoupon(ApplyCouponRequest $request, string $cartToken)
+    {
+        return ApiResponse::success(
+            new CartResource($this->carts->applyGuestCoupon($cartToken, $request->validated('code'))),
+            'Coupon applied successfully.'
+        );
+    }
+
+    public function removeCoupon(string $cartToken)
+    {
+        return ApiResponse::success(
+            new CartResource($this->carts->removeGuestCoupon($cartToken)),
+            'Coupon removed successfully.'
         );
     }
 }

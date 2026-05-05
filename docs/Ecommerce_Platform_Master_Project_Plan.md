@@ -36,6 +36,7 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 - Admin frontend
 - Customer storefront
 - Core ecommerce workflows
+- Baseline promotions and coupon workflows
 - Security, logging, deployment, and reporting baseline
 
 ### Out of Scope For Initial Core Delivery
@@ -44,6 +45,7 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 - Native mobile apps
 - AI recommendations
 - Loyalty ecosystem beyond baseline promotions unless separately approved
+- Advanced promotion engine beyond coupon, offer price, flash sale, and free-delivery baseline
 
 ## 4. Execution Sequence
 
@@ -52,7 +54,7 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 | 1 | Backend Core | All business rules, entities, and internal architecture depend on this |
 | 2 | API Layer | Frontends need stable contracts to build against |
 | 3 | Admin Frontend | Admin depends on backend modules and validated route/API behavior |
-| 4 | Storefront | Storefront should sit on completed customer, cart, checkout, and order flows |
+| 4 | Storefront | Storefront should sit on completed customer, cart, promotion/coupon, checkout, and order flows |
 
 ## 5. Dependency Map
 
@@ -60,7 +62,8 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 
 - Auth depends on users, roles, sessions, and security baseline.
 - Catalog depends on categories, products, media, SEO, and inventory rules.
-- Checkout depends on cart, pricing, addresses, shipping, and payment orchestration.
+- Promotions depend on catalog, cart pricing, customer identity where available, and order redemption records.
+- Checkout depends on cart, pricing, promotions/coupons, addresses, shipping, and payment orchestration.
 - Orders depend on checkout, inventory reservation, payment states, and fulfillment rules.
 - Reporting depends on stable domain events and queryable operational data.
 - Admin frontend depends on backend views/routes or admin-facing endpoints.
@@ -71,7 +74,7 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 - Admin dashboard depends on backend metrics aggregation.
 - Admin product/order/customer screens depend on complete CRUD and filterable endpoints or server-rendered flows.
 - Storefront listing depends on searchable product/category APIs.
-- Storefront cart and checkout depend on validated pricing and stock reservation rules.
+- Storefront cart and checkout depend on validated pricing, promotion/coupon, and stock reservation rules.
 
 ## 6. Phase Structure
 
@@ -84,6 +87,7 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 - products and variants
 - inventory
 - cart
+- promotions and coupons baseline
 - checkout
 - orders
 - payments baseline
@@ -100,7 +104,7 @@ The breakdown is intentionally sequenced so foundational backend work lands firs
 - UX refinement
 - reporting expansion
 - automation improvements
-- optional promotions enhancement
+- advanced promotions enhancement
 - optional multi-vendor activation
 
 ## 6.1 Engineering Breakdown Standard
@@ -372,6 +376,23 @@ Use this as the engineering-level checklist while implementing backend modules.
 - `Event/Listener`: CartItemAdded, CartItemUpdated, CartMerged
 - `Test`: guest cart tests, logged-in cart tests, merge tests, stale item handling tests
 
+#### Promotions And Coupons Artifact Checklist
+
+- `Migration`: coupons, coupon_redemptions, optional promotion_campaigns or promotion_rules if needed for baseline offers
+- `Model`: Coupon, CouponRedemption, PromotionCampaign if campaign scheduling is implemented
+- `Repository`: CouponRepository, CouponRedemptionRepository, PromotionCampaignRepository if used
+- `Service`: CouponService, CouponValidationService, DiscountCalculationService, CouponRedemptionService, PromotionSchedulingService if used
+- `Controller`: CouponController, CouponApplicationController, PromotionCampaignController if used
+- `Controller Methods`: index, show, store, update, destroy, activate, deactivate, validateCoupon, applyToCart, removeFromCart, recordRedemption, usageReport
+- `Request`: StoreCouponRequest, UpdateCouponRequest, ValidateCouponRequest, ApplyCouponRequest, CouponFilterRequest
+- `Resource`: CouponResource, CouponListResource, CouponValidationResultResource, CouponRedemptionResource
+- `Policy`: CouponPolicy with `coupon.manage`, `coupon.view`, and reporting permissions
+- `Route`: admin coupon CRUD routes, customer/guest cart coupon apply/remove routes, checkout validation hooks
+- `Event/Listener`: CouponCreated, CouponUpdated, CouponApplied, CouponRemoved, CouponRedeemed, CouponExpired
+- `Job/Command`: scheduled coupon activation/expiration and optional campaign status updates
+- `Seeder/Factory`: coupon factory, redemption factory, baseline sample coupon seeder if needed
+- `Test`: coupon CRUD tests, active date tests, minimum order tests, usage limit tests, customer limit tests, product/category eligibility tests, free-delivery tests, checkout concurrency tests
+
 #### Checkout And Order Creation Artifact Checklist
 
 - `Migration`: orders, order_items, order_addresses, checkout_sessions if used
@@ -471,69 +492,69 @@ Use this as the engineering-level checklist while implementing backend modules.
 
 ### B1. Platform Foundation
 
-- `B1.1` Create and finalize simple modular Laravel folder structure - finalized in `backend/PROJECT_STRUCTURE.md`
-- `B1.2` define module registration pattern using `config/modules.php`, `bootstrap/providers.php`, and module providers - finalized in `backend/PROJECT_STRUCTURE.md`
-- `B1.3` create shared base controller, service, repository, and request patterns
-- `B1.4` define global exception handling approach - finalized in `backend/PROJECT_STRUCTURE.md`
-- `B1.5` define global validation error response pattern
-- `B1.6` define logging middleware and trace correlation strategy - finalized in `backend/PROJECT_STRUCTURE.md`
-- `B1.7` set up environment configuration structure - finalized in `backend/PROJECT_STRUCTURE.md`
-- `B1.8` create seed and bootstrap strategy for baseline data
-- `B1.9` define feature/module enable-disable strategy
-- `B1.10` define internal coding standards for modules - finalized in `backend/MODULE_CODING_STANDARDS.md`
+- [DONE] `B1.1` Create and finalize simple modular Laravel folder structure - finalized in `backend/PROJECT_STRUCTURE.md`
+- [DONE] `B1.2` define module registration pattern using `config/modules.php`, `bootstrap/providers.php`, and module providers - finalized in `backend/PROJECT_STRUCTURE.md`
+- [DONE] `B1.3` create shared base controller, service, repository, and request patterns
+- [DONE] `B1.4` define global exception handling approach - finalized in `backend/PROJECT_STRUCTURE.md`
+- [DONE] `B1.5` define global validation error response pattern
+- [DONE] `B1.6` define logging middleware and trace correlation strategy - finalized in `backend/PROJECT_STRUCTURE.md`
+- [DONE] `B1.7` set up environment configuration structure - finalized in `backend/PROJECT_STRUCTURE.md`
+- [PARTIAL] `B1.8` create seed and bootstrap strategy for baseline data
+- [PARTIAL] `B1.9` define feature/module enable-disable strategy
+- [DONE] `B1.10` define internal coding standards for modules - finalized in `backend/MODULE_CODING_STANDARDS.md`
 
 ### B2. Authentication And Authorization
 
-- `B2.1` implement admin authentication domain
-- `B2.2` implement customer authentication domain
-- `B2.3` implement password reset flow
-- `B2.4` implement session/token lifecycle handling
-- `B2.5` implement roles model -front end needed later 
-- `B2.6` implement permissions model-front end needed later 
-- `B2.7` implement policy/gate enforcement strategy
-- `B2.8` implement audit events for auth-sensitive actions
-- `B2.9` add rate limiting around auth endpoints
-- `B2.10` verify authorization boundaries across modules
+- [DONE] `B2.1` implement admin authentication domain
+- [DONE] `B2.2` implement customer authentication domain
+- [DONE] `B2.3` implement password reset flow
+- [DONE] `B2.4` implement session/token lifecycle handling
+- [DONE] `B2.5` implement roles model -front end needed later
+- [DONE] `B2.6` implement permissions model-front end needed later
+- [DONE] `B2.7` implement policy/gate enforcement strategy
+- [DONE] `B2.8` implement audit events for auth-sensitive actions
+- [DONE] `B2.9` add rate limiting around auth endpoints
+- [DONE] `B2.10` verify authorization boundaries across modules
 
 ### B3. Store Configuration And Platform Controls
 
-- `B3.1` store profile settings
-- `B3.2` branding settings
-- `B3.3` SEO defaults
-- `B3.4` policy page settings
-- `B3.5` basic module toggles
-- `B3.6` business configuration storage
-- `B3.7` settings validation rules
-- `B3.8` audit trail for settings changes
+- [DONE] `B3.1` store profile settings
+- [DONE] `B3.2` branding settings
+- [DONE] `B3.3` SEO defaults
+- [DONE] `B3.4` policy page settings
+- [DONE] `B3.5` basic module toggles
+- [DONE] `B3.6` business configuration storage
+- [DONE] `B3.7` settings validation rules
+- [DONE] `B3.8` audit trail for settings changes
 
 ### B4. Catalog Domain
 
-- `B4.1` category entity and relationships
-- `B4.2` category hierarchy and ordering
-- `B4.3` product entity
-- `B4.4` product variants
-- `B4.5` product images/media
-- `B4.6` product publish/unpublish rules
-- `B4.7` slug generation and uniqueness
-- `B4.8` SKU uniqueness and validation
-- `B4.9` SEO metadata support
-- `B4.10` catalog status and visibility rules
+- [DONE] `B4.1` category entity and relationships
+- [PARTIAL] `B4.2` category hierarchy and ordering
+- [DONE] `B4.3` product entity
+- [DONE] `B4.4` product variants
+- [DONE] `B4.5` product images/media
+- [DONE] `B4.6` product publish/unpublish rules
+- [DONE] `B4.7` slug generation and uniqueness
+- [DONE] `B4.8` SKU uniqueness and validation
+- [PENDING] `B4.9` SEO metadata support
+- [DONE] `B4.10` catalog status and visibility rules
 
 ### B5. Inventory Domain
 
-- `B5.1` stock model design
-- `B5.2` inventory transaction log
-- `B5.3` stock adjustment workflow
-- `B5.4` stock reservation workflow
-- `B5.5` stock release workflow
-- `B5.6` low stock rule support
-- `B5.7` concurrency protection for stock mutation
-- `B5.8` inventory visibility rules by product and variant
+- [DONE] `B5.1` stock model design
+- [DONE] `B5.2` inventory transaction log
+- [DONE] `B5.3` stock adjustment workflow
+- [DONE] `B5.4` stock reservation workflow
+- [DONE] `B5.5` stock release workflow
+- [DONE] `B5.6` low stock rule support
+- [DONE] `B5.7` concurrency protection for stock mutation
+- [DONE] `B5.8` inventory visibility rules by product and variant
 
 ### B6. Customer Domain
 
-- `B6.1` customer profile domain
-- `B6.2` customer address domain
+- [DONE] `B6.1` customer profile domain
+- [DONE] `B6.2` customer address domain
 - [DONE] `B6.3` customer order linkage
 - [DONE] `B6.4` customer tags/notes support
 - [DONE] `B6.5` customer status management
@@ -541,122 +562,155 @@ Use this as the engineering-level checklist while implementing backend modules.
 
 ### B7. Cart Domain
 
-- `B7.1` guest cart lifecycle
-- `B7.2` customer cart lifecycle
-- `B7.3` cart line item rules
-- `B7.4` cart quantity update rules
-- `B7.5` cart price recalculation pipeline
-- `B7.6` cart merge logic after login
-- `B7.7` unavailable item handling
-- `B7.8` cart persistence and recovery behavior
+- [DONE] `B7.1` guest cart lifecycle
+- [DONE] `B7.2` customer cart lifecycle
+- [DONE] `B7.3` cart line item rules
+- [DONE] `B7.4` cart quantity update rules
+- [DONE] `B7.5` cart price recalculation pipeline
+- [PENDING] `B7.6` cart merge logic after login
+- [DONE] `B7.7` unavailable item handling
+- [DONE] `B7.8` cart persistence and recovery behavior
 
-### B8. Checkout And Order Creation
+### B8. Promotions And Coupons Domain
 
-- `B8.1` checkout validation pipeline
-- `B8.2` address selection and creation flow
-- `B8.3` shipping resolution flow
-- `B8.4` payment method resolution flow
-- `B8.5` order draft to order creation transaction
-- `B8.6` order item snapshot capture
-- `B8.7` idempotent checkout submission handling
-- `B8.8` rollback and compensation rules
-- `B8.9` order confirmation event generation
-Group 1: B8.1 + B8.2
-Group 2: B8.3 + B8.4
-Group 3: B8.5 + B8.6 + B8.7 + B8.8
-Group 4: B8.9
+#### Group 1: Coupon Foundation
+
+- [DONE] `B8.1` coupon entity, code uniqueness, and status lifecycle
+- [DONE] `B8.2` fixed, percentage, and free-delivery discount types
+- [DONE] `B8.3` coupon start/end date and scheduled activation/expiration behavior
+
+#### Group 2: Coupon Eligibility Rules
+
+- [DONE] `B8.4` minimum order value and cart eligibility validation
+- [DONE] `B8.5` product/category eligibility rules where enabled
+- [DONE] `B8.6` total usage limit and per-customer usage limit enforcement
+
+#### Group 3: Cart And Checkout Discount Integration
+
+- [DONE] `B8.7` cart coupon apply/remove flow for guest and customer carts
+- [DONE] `B8.8` discount calculation integration with cart totals and checkout totals
+
+#### Group 4: Redemption And Usage Consistency
+
+- [DONE] `B8.9` coupon redemption recording during order creation
+- [DONE] `B8.10` atomic usage count updates inside checkout/order transaction
+
+#### Group 5: Audit, Reporting, And Campaign Baseline
+
+- [DONE] `B8.11` coupon audit events for create/update/delete/activate/deactivate
+- [DONE] `B8.12` basic coupon performance data for reporting
+- [PARTIAL] `B8.13` product offer price, flash sale, and campaign banner baseline alignment
+
+### B9. Checkout And Order Creation
+
+- [DONE] `B9.1` checkout validation pipeline
+- [DONE] `B9.2` address selection and creation flow
+- [DONE] `B9.3` shipping resolution flow
+- [DONE] `B9.4` payment method resolution flow
+- [DONE] `B9.5` coupon and discount revalidation before order creation
+- [DONE] `B9.6` order draft to order creation transaction
+- [DONE] `B9.7` order item and discount snapshot capture
+- [DONE] `B9.8` idempotent checkout submission handling
+- [DONE] `B9.9` rollback and compensation rules
+- [DONE] `B9.10` order confirmation event generation
+Group 1: B9.1 + B9.2
+Group 2: B9.3 + B9.4 + B9.5
+Group 3: B9.6 + B9.7 + B9.8 + B9.9
+Group 4: B9.10
 
 
 
-### B9. Orders And Fulfillment
+### B10. Orders And Fulfillment
 
-- `B9.1` order entity lifecycle
-- `B9.2` order status machine
-- `B9.3` order history tracking
-- `B9.4` internal order notes
-- `B9.5` cancellation workflow
-- `B9.6` return request baseline
-- `B9.7` invoice generation baseline
-- `B9.8` packing slip baseline
-- `B9.9` shipment linkage
+- [DONE] `B10.1` order entity lifecycle
+- [DONE] `B10.2` order status machine
+- [DONE] `B10.3` order history tracking
+- [DONE] `B10.4` internal order notes
+- [DONE] `B10.5` cancellation workflow
+- [DONE] `B10.6` return request baseline
+- [DONE] `B10.7` invoice generation baseline
+- [DONE] `B10.8` packing slip baseline
+- [DONE] `B10.9` shipment linkage
 
-B9.1 + B9.2 + B9.3
-B9.4 + B9.5
-B9.7 + B9.8
-B9.6 + B9.9
+B10.1 + B10.2 + B10.3
+B10.4 + B10.5
+B10.7 + B10.8
+B10.6 + B10.9
 
-### B10. Payments
+### B11. Payments
 
-- `B10.1` payment entity and states
-- `B10.2` COD workflow
-- `B10.3` manual admin payment update flow
-- `B10.4` payment gateway adapter contract
-- `B10.5` webhook verification
-- `B10.6` webhook idempotency
-- `B10.7` order-payment synchronization rules
+- [DONE] `B11.1` payment entity and states
+- [DONE] `B11.2` COD workflow
+- [DONE] `B11.3` manual admin payment update flow
+- [DONE] `B11.4` payment gateway adapter contract
+- [DONE] `B11.5` webhook verification
+- [DONE] `B11.6` webhook idempotency
+- [DONE] `B11.7` order-payment synchronization rules
 
-B10.1 + B10.7
-B10.2 + B10.3
-B10.4
-B10.5 + B10.6
+B11.1 + B11.7
+B11.2 + B11.3
+B11.4
+B11.5 + B11.6
 
-### B11. Shipping And Courier //skipped 
+### B12. Shipping And Courier //skipped
 
-- `B11.1` delivery zones
-- `B11.2` delivery rules and rates
-- `B11.3` shipment creation rules
-- `B11.4` tracking information support
-- `B11.5` courier adapter baseline
-- `B11.6` courier webhook normalization
-- `B11.7` shipment state synchronization
+- [DONE] `B12.1` delivery zones
+- [DONE] `B12.2` delivery rules and rates
+- [DONE] `B12.3` shipment creation rules
+- [DONE] `B12.4` tracking information support
+- [PENDING] `B12.5` courier adapter baseline
+- [PENDING] `B12.6` courier webhook normalization
+- [PARTIAL] `B12.7` shipment state synchronization
 
-### B12. Content And CMS Support //skip 
+### B13. Content And CMS Support //skip
 
-- `B12.1` policy pages
-- `B12.2` content pages
-- `B12.3` homepage content blocks
-- `B12.4` footer content configuration
-- `B12.5` banner/hero content support
+- [PARTIAL] `B13.1` policy pages
+- [PENDING] `B13.2` content pages
+- [PENDING] `B13.3` homepage content blocks
+- [PENDING] `B13.4` footer content configuration
+- [PENDING] `B13.5` banner/hero content support
 
-### B13. Reporting And Dashboard Data
+### B14. Reporting And Dashboard Data
 
-- `B13.1` KPI aggregation services
-- `B13.2` orders reporting queries
-- `B13.3` sales reporting queries
-- `B13.4` inventory reporting queries
-- `B13.5` customer reporting queries
-- `B13.6` export job infrastructure //skip 
+- [DONE] `B14.1` KPI aggregation services
+- [DONE] `B14.2` orders reporting queries
+- [DONE] `B14.3` sales reporting queries
+- [DONE] `B14.4` inventory reporting queries
+- [DONE] `B14.5` customer reporting queries
+- [DONE] `B14.6` coupon performance reporting queries
+- [PARTIAL] `B14.7` export job infrastructure //skip
 
-B13.1 + B13.2 + B13.3
-B13.4 + B13.5
-B13.6
+B14.1 + B14.2 + B14.3
+B14.4 + B14.5 + B14.6
+B14.7
 
-### B14. Security, Audit, And Observability
+### B15. Security, Audit, And Observability
 
-- `B14.1` audit log storage model
-- `B14.2` security event catalog
-- `B14.3` request/response logging baseline
-- `B14.4` permission hardening
-- `B14.5` input validation hardening
-- `B14.6` throttling and abuse protection
-- `B14.7` exception traceability
-- `B14.8` operational monitoring hooks
+- [DONE] `B15.1` audit log storage model
+- [DONE] `B15.2` security event catalog
+- [DONE] `B15.3` request/response logging baseline
+- [DONE] `B15.4` permission hardening
+- [DONE] `B15.5` input validation hardening
+- [PARTIAL] `B15.6` throttling and abuse protection
+- [DONE] `B15.7` exception traceability
+- [PARTIAL] `B15.8` operational monitoring hooks
 
-### B15. Testing And Delivery Infrastructure
+### B16. Testing And Delivery Infrastructure
 
-- `B15.1` backend unit testing baseline
-- `B15.2` feature testing baseline
-- `B15.3` test factories and fixtures
-- `B15.4` CI lint/test pipeline
-- `B15.5` build automation
-- `B15.6` deployment templates
-- `B15.7` backup and restore procedures
-- `B15.8` rollback checklist
+- [PARTIAL] `B16.1` backend unit testing baseline
+- [DONE] `B16.2` feature testing baseline
+- [PARTIAL] `B16.3` test factories and fixtures
+- [PENDING] `B16.4` CI lint/test pipeline
+- [PARTIAL] `B16.5` build automation
+- [PENDING] `B16.6` deployment templates
+- [PENDING] `B16.7` backup and restore procedures
+- [PENDING] `B16.8` rollback checklist
 
 ### Backend Deliverables
 
 - modular Laravel backend
 - stable domain models
+- promotion/coupon rules integrated with cart, checkout, orders, and reporting
 - shared service/repository patterns
 - validated business rules
 - logging and audit baseline
@@ -758,59 +812,74 @@ For every endpoint, define:
 - [DONE] `A7.5` cart summary API
 - [PENDING] `A7.6` merge cart API
 
-### A8. Checkout APIs
+### A8. Promotions And Coupons APIs
 
-- [DONE] `A8.1` checkout validation API
-- [DONE] `A8.2` shipping options resolution API
-- [DONE] `A8.3` checkout submit API
-- [PARTIAL] `A8.4` checkout confirmation/status API
+- [DONE] `A8.1` admin coupon list/detail APIs
+- [DONE] `A8.2` admin coupon create/update/delete APIs
+- [DONE] `A8.3` admin coupon activate/deactivate APIs
+- [DONE] `A8.4` guest cart apply/remove coupon APIs
+- [DONE] `A8.5` customer cart apply/remove coupon APIs
+- [DONE] `A8.6` coupon validation API used by cart and checkout
+- [DONE] `A8.7` coupon redemption/usage reporting API
+- [PARTIAL] `A8.8` OpenAPI and Postman examples for coupon success and rejection cases
 
-### A9. Order APIs
+### A9. Checkout APIs
 
-- [DONE] `A9.1` order list API for admin
-- [DONE] `A9.2` order detail API
-- [DONE] `A9.3` order status update API
-- [DONE] `A9.4` cancellation API
-- [DONE] `A9.5` return request APIs
-- [PENDING] `A9.6` customer order tracking API
+- [DONE] `A9.1` checkout validation API
+- [DONE] `A9.2` shipping options resolution API
+- [DONE] `A9.3` checkout submit API
+- [PARTIAL] `A9.4` checkout confirmation/status API
+- [DONE] `A9.5` checkout coupon revalidation and discount response fields
 
-### A10. Payment APIs
+### A10. Order APIs
 
-- [DONE] `A10.1` payment initiation baseline
-- [PARTIAL] `A10.2` payment status API
-- [DONE] `A10.3` manual payment update API for admin
-- [DONE] `A10.4` webhook endpoints
+- [DONE] `A10.1` order list API for admin
+- [DONE] `A10.2` order detail API
+- [DONE] `A10.3` order status update API
+- [DONE] `A10.4` cancellation API
+- [DONE] `A10.5` return request APIs
+- [PENDING] `A10.6` customer order tracking API
+- [DONE] `A10.7` order discount/coupon snapshot fields in admin and customer responses
 
-### A11. Shipping APIs
+### A11. Payment APIs
 
-- [DONE] `A11.1` delivery zone/rate admin APIs
-- [PARTIAL] `A11.2` shipment creation/update APIs
-- [PARTIAL] `A11.3` tracking APIs
-- [PENDING] `A11.4` courier webhook APIs
+- [DONE] `A11.1` payment initiation baseline
+- [PARTIAL] `A11.2` payment status API
+- [DONE] `A11.3` manual payment update API for admin
+- [DONE] `A11.4` webhook endpoints
 
-### A12. Reporting APIs
+### A12. Shipping APIs
 
-- [DONE] `A12.1` dashboard KPI API
-- [DONE] `A12.2` sales report API
-- [DONE] `A12.3` orders report API
-- [DONE] `A12.4` inventory report API
-- [DONE] `A12.5` customer report API
-- [PENDING] `A12.6` export trigger/status APIs
+- [DONE] `A12.1` delivery zone/rate admin APIs
+- [PARTIAL] `A12.2` shipment creation/update APIs
+- [PARTIAL] `A12.3` tracking APIs
+- [PENDING] `A12.4` courier webhook APIs
 
-### A13. API Quality And Governance
+### A13. Reporting APIs
 
-- `A13.1` request validation coverage
-- `A13.2` resource transformer coverage
-- [DONE] `A13.3` OpenAPI documentation updates
-- `A13.4` contract testing
-- `A13.5` API permission matrix validation
-- `A13.6` API performance review for list/search endpoints
+- [DONE] `A13.1` dashboard KPI API
+- [DONE] `A13.2` sales report API
+- [DONE] `A13.3` orders report API
+- [DONE] `A13.4` inventory report API
+- [DONE] `A13.5` customer report API
+- [DONE] `A13.6` coupon report API
+- [PENDING] `A13.7` export trigger/status APIs
+
+### A14. API Quality And Governance
+
+- `A14.1` request validation coverage
+- `A14.2` resource transformer coverage
+- [DONE] `A14.3` OpenAPI documentation updates
+- `A14.4` contract testing
+- `A14.5` API permission matrix validation
+- `A14.6` API performance review for list/search endpoints
 
 ### API Deliverables
 
 - versioned API surface
 - documented request/response contracts
 - admin-facing and customer-facing endpoints
+- coupon validation, apply/remove, redemption, and discount snapshot contracts
 - secured and validated API layer
 
 ## 7.3 Admin Frontend Workstream
@@ -934,34 +1003,47 @@ For every admin screen, define:
 - [DONE] `F9.6` shipment and tracking UI
 - [DONE] `F9.7` invoice/packing slip access points
 
-### F10. Payment And Shipping Management
+### F10. Promotions And Coupons Management
 
-- [DONE] `F10.1` payment status/admin payment controls
-- [DONE] `F10.2` delivery zones UI
-- [DONE] `F10.3` shipping rates UI
-- [DONE] `F10.4` shipment management UI
+- [DONE] `F10.1` coupon list screen
+- [DONE] `F10.2` coupon create/edit form
+- [DONE] `F10.3` coupon status controls for activate/deactivate/archive/delete
+- [DONE] `F10.4` discount type, value, minimum order, date window, and usage limit fields
+- [DONE] `F10.5` product/category eligibility selector where enabled
+- [DONE] `F10.6` coupon redemption/usage detail screen
+- [DONE] `F10.7` coupon performance summary widgets
+- [DONE] `F10.8` coupon validation, permission, audit, empty, and error states
 
-### F11. Reports And Exports
+### F11. Payment And Shipping Management
 
-- [DONE] `F11.1` sales report screen
-- [DONE] `F11.2` orders report screen
-- [DONE] `F11.3` inventory report screen
-- [DONE] `F11.4` customer report screen
-- [DONE] `F11.5` export trigger/download UI
+- [DONE] `F11.1` payment status/admin payment controls
+- [DONE] `F11.2` delivery zones UI
+- [DONE] `F11.3` shipping rates UI
+- [DONE] `F11.4` shipment management UI
 
-### F12. Admin UX Consistency And Quality
+### F12. Reports And Exports
 
-- [PARTIAL] `F12.1` shared table patterns
-- [PARTIAL] `F12.2` shared form validation patterns
-- [PARTIAL] `F12.3` shared confirmation modal/prompt patterns
-- [PARTIAL] `F12.4` shared status badge conventions
-- [PARTIAL] `F12.5` responsive admin layout review
-- [PARTIAL] `F12.6` accessibility baseline review
+- [DONE] `F12.1` sales report screen
+- [DONE] `F12.2` orders report screen
+- [DONE] `F12.3` inventory report screen
+- [DONE] `F12.4` customer report screen
+- [PENDING] `F12.5` coupon performance report screen
+- [DONE] `F12.6` export trigger/download UI
+
+### F13. Admin UX Consistency And Quality
+
+- [PARTIAL] `F13.1` shared table patterns
+- [PARTIAL] `F13.2` shared form validation patterns
+- [PARTIAL] `F13.3` shared confirmation modal/prompt patterns
+- [PARTIAL] `F13.4` shared status badge conventions
+- [PARTIAL] `F13.5` responsive admin layout review
+- [PARTIAL] `F13.6` accessibility baseline review
 
 ### Admin Frontend Deliverables
 
 - reusable admin layout
 - module-based management screens
+- coupon management and coupon performance visibility
 - operational dashboard
 - consistent admin UX for core commerce flows
 
@@ -1068,6 +1150,8 @@ For every storefront page or flow, define:
 - `S7.5` cart totals summary
 - `S7.6` invalid item/stock change messaging
 - `S7.7` guest cart persistence
+- `S7.8` coupon apply/remove interaction
+- `S7.9` discount, free-delivery, invalid coupon, and expired coupon messaging
 
 ### S8. Customer Authentication And Account
 
@@ -1087,9 +1171,10 @@ For every storefront page or flow, define:
 - `S9.3` shipping option step
 - `S9.4` payment option step
 - `S9.5` order summary step
-- `S9.6` validation/error messaging
-- `S9.7` duplicate submit protection
-- `S9.8` success/confirmation page
+- `S9.6` coupon and discount revalidation feedback
+- `S9.7` validation/error messaging
+- `S9.8` duplicate submit protection
+- `S9.9` success/confirmation page with discount snapshot
 
 ### S10. Content And Informational Pages
 
@@ -1111,7 +1196,7 @@ For every storefront page or flow, define:
 
 - customer-facing shopping experience
 - category/product discovery flows
-- cart and checkout flows
+- cart, coupon, and checkout flows
 - customer account area
 - content and trust pages
 
@@ -1125,20 +1210,21 @@ For every storefront page or flow, define:
 
 ### M2. Core Commerce Backend Ready
 
-- catalog, inventory, customer, cart, checkout, orders, payments, and shipping rules are implemented
+- catalog, inventory, customer, cart, baseline promotions/coupons, checkout, orders, payments, and shipping rules are implemented
 
 ### M3. API Contract Ready
 
 - major API contracts are versioned and documented
 - request/response patterns are stable
+- coupon apply/remove, checkout discount, and order discount snapshot contracts are stable
 
 ### M4. Admin Operations Ready
 
-- admin users can manage store, catalog, customers, orders, inventory, and reports
+- admin users can manage store, catalog, customers, orders, inventory, coupons, and reports
 
 ### M5. Storefront MVP Ready
 
-- customer can browse, search, view product, add to cart, checkout, and track order
+- customer can browse, search, view product, add to cart, apply a valid coupon where available, checkout, and track order
 
 ### M6. Go-Live Readiness
 
@@ -1153,6 +1239,7 @@ For every storefront page or flow, define:
 - every core module has happy-path validation
 - failure paths are handled gracefully
 - business rules are enforced consistently across UI and API
+- coupon expiry, eligibility, usage limit, and redemption rules are verified across cart, checkout, and order creation
 
 ### Technical Verification
 
@@ -1180,15 +1267,16 @@ For every storefront page or flow, define:
 6. inventory
 7. customers
 8. cart
-9. checkout
-10. orders
-11. payments
-12. shipping
-13. content/CMS
-14. reports/dashboard
-15. admin frontend completion
-16. storefront completion
-17. optimization and release hardening
+9. promotions/coupons
+10. checkout
+11. orders
+12. payments
+13. shipping
+14. content/CMS
+15. reports/dashboard
+16. admin frontend completion
+17. storefront completion
+18. optimization and release hardening
 
 ## 11. Definition Of Done
 

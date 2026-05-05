@@ -1,0 +1,545 @@
+<?php $__env->startSection('title', 'Coupons'); ?>
+<?php $__env->startSection('page_title', 'Coupons'); ?>
+<?php $__env->startSection('page_subtitle', 'Review coupon status, schedule, discount value, and usage.'); ?>
+
+<?php $__env->startSection('breadcrumbs'); ?>
+    <li class="breadcrumb-item"><a href="<?php echo e(route('admin.dashboard')); ?>">Dashboard</a></li>
+    <li class="breadcrumb-item active" aria-current="page">Coupons</li>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startSection('content'); ?>
+    <div class="card mb-3">
+        <div class="card-body">
+            <form id="coupon-filter-form" class="row g-2">
+                <div class="col-md-4">
+                    <label for="coupon_search" class="form-label">Search</label>
+                    <input id="coupon_search" class="form-control" placeholder="Code or name">
+                </div>
+                <div class="col-md-3">
+                    <label for="coupon_status" class="form-label">Status</label>
+                    <select id="coupon_status" class="form-select">
+                        <option value="">All statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="expired">Expired</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label for="coupon_per_page" class="form-label">Rows</label>
+                    <select id="coupon_per_page" class="form-select">
+                        <option value="15">15</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary">Apply</button>
+                    <button type="button" class="btn btn-outline-secondary" id="reset-coupon-filters">Reset</button>
+                    <button type="button" class="btn btn-outline-primary" id="refresh-coupons">Refresh</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header border-0">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <div>
+                            <h3 class="card-title">Coupon List</h3>
+                            <p class="text-secondary mb-0 mt-1" id="coupon-list-summary">Loading coupons...</p>
+                        </div>
+                        <?php if (app(\Illuminate\Contracts\Auth\Access\Gate::class)->check('coupons.create')): ?>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="new-coupon">New coupon</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Name</th>
+                                    <th>Discount</th>
+                                    <th>Minimum</th>
+                                    <th>Lifecycle</th>
+                                    <th>Schedule</th>
+                                    <th>Usage</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coupon-table-body">
+                                <tr>
+                                    <td colspan="8" class="text-center py-4 text-secondary">Loading coupons...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div class="text-secondary" id="coupon-pagination-summary">Page 1</div>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-secondary" id="previous-coupon-page">Previous</button>
+                        <button type="button" class="btn btn-outline-secondary" id="next-coupon-page">Next</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <form id="coupon-form" class="card">
+                <div class="card-header">
+                    <h3 class="card-title" id="coupon-form-title">Create Coupon</h3>
+                </div>
+                <div class="card-body">
+                    <input type="hidden" id="coupon_id">
+
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Name</label>
+                        <input id="name" class="form-control" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Code</label>
+                        <input id="code" class="form-control text-uppercase" required>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="discount_type" class="form-label">Type</label>
+                            <select id="discount_type" class="form-select">
+                                <option value="fixed">Fixed</option>
+                                <option value="percentage">Percentage</option>
+                                <option value="free_delivery">Free delivery</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="discount_value" class="form-label">Value</label>
+                            <input id="discount_value" type="number" min="0" step="0.01" class="form-control" value="0">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-6">
+                            <label for="minimum_order_value" class="form-label">Minimum</label>
+                            <input id="minimum_order_value" type="number" min="0" step="0.01" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="status" class="form-label">Status</label>
+                            <select id="status" class="form-select">
+                                <option value="inactive">Inactive</option>
+                                <option value="active">Active</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-6">
+                            <label for="starts_at" class="form-label">Starts</label>
+                            <input id="starts_at" type="datetime-local" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="ends_at" class="form-label">Ends</label>
+                            <input id="ends_at" type="datetime-local" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mt-1">
+                        <div class="col-md-6">
+                            <label for="usage_limit" class="form-label">Usage limit</label>
+                            <input id="usage_limit" type="number" min="1" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="per_customer_usage_limit" class="form-label">Customer limit</label>
+                            <input id="per_customer_usage_limit" type="number" min="1" class="form-control">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="eligible_product_ids" class="form-label">Product IDs</label>
+                        <input id="eligible_product_ids" class="form-control" placeholder="1,2,3">
+                    </div>
+
+                    <div class="mt-3">
+                        <label for="eligible_category_ids" class="form-label">Category IDs</label>
+                        <input id="eligible_category_ids" class="form-control" placeholder="1,2,3">
+                    </div>
+                </div>
+                <div class="card-footer d-flex justify-content-between gap-2">
+                    <button type="button" class="btn btn-outline-secondary" id="reset-coupon-form">Reset</button>
+                    <button type="submit" class="btn btn-primary">Save coupon</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<?php $__env->stopSection(); ?>
+
+<?php $__env->startPush('scripts'); ?>
+    <script>
+        const couponRoutes = {
+            data: <?php echo json_encode(route('admin.coupons.data'), 15, 512) ?>,
+            store: <?php echo json_encode(route('admin.coupons.store'), 15, 512) ?>,
+            show: <?php echo json_encode(route('admin.coupons.show', ['id' => '__ID__']), 512) ?>,
+            update: <?php echo json_encode(route('admin.coupons.update', ['id' => '__ID__']), 512) ?>,
+            activate: <?php echo json_encode(route('admin.coupons.activate', ['id' => '__ID__']), 512) ?>,
+            deactivate: <?php echo json_encode(route('admin.coupons.deactivate', ['id' => '__ID__']), 512) ?>,
+            destroy: <?php echo json_encode(route('admin.coupons.destroy', ['id' => '__ID__']), 512) ?>,
+        };
+        const couponPermissions = {
+            update: <?php echo json_encode(auth()->user()->can('coupons.update'), 15, 512) ?>,
+            delete: <?php echo json_encode(auth()->user()->can('coupons.delete'), 15, 512) ?>,
+        };
+        const csrfToken = <?php echo json_encode(csrf_token(), 15, 512) ?>;
+
+        let couponRows = [];
+        let couponPagination = {
+            current_page: 1,
+            last_page: 1,
+            per_page: 15,
+            total: 0,
+        };
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;');
+        }
+
+        function money(value) {
+            const amount = Number(value ?? 0);
+            return Number.isFinite(amount) ? amount.toFixed(2) : '0.00';
+        }
+
+        function couponFilters(page = 1) {
+            return {
+                page,
+                per_page: $('#coupon_per_page').val(),
+            };
+        }
+
+        function routeFor(template, id) {
+            return template.replace('__ID__', id);
+        }
+
+        function requestJson(url, options = {}) {
+            return $.ajax({
+                url,
+                method: options.method || 'GET',
+                data: options.body ? JSON.stringify(options.body) : null,
+                dataType: 'json',
+                contentType: 'application/json',
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            }).catch((xhr) => {
+                const body = xhr.responseJSON || {};
+                const errors = body.errors ? Object.values(body.errors).flat().join(' ') : body.message;
+                throw new Error(errors || 'Request failed.');
+            });
+        }
+
+        function lifecycleBadge(status) {
+            const colors = {
+                active: 'success',
+                inactive: 'secondary',
+                scheduled: 'info',
+                expired: 'warning',
+            };
+
+            return `<span class="badge text-bg-${colors[status] || 'secondary'}">${escapeHtml(status || 'unknown')}</span>`;
+        }
+
+        function discountLabel(coupon) {
+            if (coupon.discount_type === 'percentage') {
+                return `${money(coupon.discount_value)}%`;
+            }
+
+            if (coupon.discount_type === 'free_delivery') {
+                return 'Free delivery';
+            }
+
+            return money(coupon.discount_value);
+        }
+
+        function scheduleLabel(coupon) {
+            const starts = coupon.starts_at ? escapeHtml(coupon.starts_at) : 'Any time';
+            const ends = coupon.ends_at ? escapeHtml(coupon.ends_at) : 'No end';
+
+            return `${starts}<br><span class="text-secondary">${ends}</span>`;
+        }
+
+        function usageLabel(coupon) {
+            const totalLimit = coupon.usage_limit ?? 'unlimited';
+            const customerLimit = coupon.per_customer_usage_limit ?? 'unlimited';
+
+            return `${escapeHtml(coupon.used_count)}/${escapeHtml(totalLimit)}<br><span class="text-secondary">Customer: ${escapeHtml(customerLimit)}</span>`;
+        }
+
+        function actionButtons(coupon) {
+            if (!couponPermissions.update && !couponPermissions.delete) {
+                return '<span class="text-secondary">None</span>';
+            }
+
+            const toggleLabel = coupon.status === 'active' ? 'Deactivate' : 'Activate';
+            const toggleClass = coupon.status === 'active' ? 'outline-warning' : 'outline-success';
+            const buttons = [];
+
+            if (couponPermissions.update) {
+                buttons.push(`<button type="button" class="btn btn-sm btn-outline-primary edit-coupon" data-id="${coupon.id}">Edit</button>`);
+                buttons.push(`<button type="button" class="btn btn-sm btn-${toggleClass} toggle-coupon-status" data-id="${coupon.id}" data-status="${escapeHtml(coupon.status)}">${toggleLabel}</button>`);
+            }
+
+            if (couponPermissions.delete) {
+                buttons.push(`<button type="button" class="btn btn-sm btn-outline-danger delete-coupon" data-id="${coupon.id}">Delete</button>`);
+            }
+
+            return `<div class="btn-group">${buttons.join('')}</div>`;
+        }
+
+        function filteredCoupons() {
+            const search = $('#coupon_search').val().trim().toLowerCase();
+            const status = $('#coupon_status').val();
+
+            return couponRows.filter((coupon) => {
+                const matchesSearch = !search
+                    || String(coupon.code || '').toLowerCase().includes(search)
+                    || String(coupon.name || '').toLowerCase().includes(search);
+                const matchesStatus = !status || coupon.lifecycle_status === status || coupon.status === status;
+
+                return matchesSearch && matchesStatus;
+            });
+        }
+
+        function renderCoupons() {
+            const rows = filteredCoupons();
+
+            $('#coupon-list-summary').text(`${couponPagination.total} coupons loaded from server, ${rows.length} visible after filters.`);
+            $('#coupon-pagination-summary').text(`Page ${couponPagination.current_page} of ${couponPagination.last_page}`);
+            $('#previous-coupon-page').prop('disabled', couponPagination.current_page <= 1);
+            $('#next-coupon-page').prop('disabled', couponPagination.current_page >= couponPagination.last_page);
+
+            if (!rows.length) {
+                $('#coupon-table-body').html('<tr><td colspan="8" class="text-center py-4 text-secondary">No coupons match these filters.</td></tr>');
+                return;
+            }
+
+            $('#coupon-table-body').html(rows.map((coupon) => `
+                <tr>
+                    <td><strong>${escapeHtml(coupon.code)}</strong></td>
+                    <td>${escapeHtml(coupon.name)}</td>
+                    <td>${escapeHtml(discountLabel(coupon))}<br><span class="text-secondary">${escapeHtml(coupon.discount_type)}</span></td>
+                    <td>${money(coupon.minimum_order_value)}</td>
+                    <td>${lifecycleBadge(coupon.lifecycle_status)}</td>
+                    <td>${scheduleLabel(coupon)}</td>
+                    <td>${usageLabel(coupon)}</td>
+                    <td class="text-end">${actionButtons(coupon)}</td>
+                </tr>
+            `).join(''));
+        }
+
+        function loadCoupons(page = 1) {
+            $('#coupon-table-body').html('<tr><td colspan="8" class="text-center py-4 text-secondary">Loading coupons...</td></tr>');
+
+            return $.ajax({
+                url: couponRoutes.data,
+                method: 'GET',
+                dataType: 'json',
+                data: couponFilters(page),
+                headers: { 'Accept': 'application/json' },
+            }).then((body) => {
+                couponRows = body.data || [];
+                couponPagination = body.meta?.pagination || couponPagination;
+                renderCoupons();
+            }).catch(() => {
+                $('#coupon-table-body').html('<tr><td colspan="8" class="text-center py-4 text-danger">Unable to load coupons.</td></tr>');
+                adminToast('Unable to load coupons.', 'danger');
+            });
+        }
+
+        function commaList(value) {
+            return Array.isArray(value) ? value.join(',') : '';
+        }
+
+        function normalizeDateTime(value) {
+            if (!value) {
+                return '';
+            }
+
+            return String(value).slice(0, 16);
+        }
+
+        function couponPayload() {
+            return {
+                name: $('#name').val(),
+                code: $('#code').val().toUpperCase(),
+                discount_type: $('#discount_type').val(),
+                discount_value: $('#discount_value').val() || null,
+                minimum_order_value: $('#minimum_order_value').val() || null,
+                status: $('#status').val(),
+                starts_at: $('#starts_at').val() || null,
+                ends_at: $('#ends_at').val() || null,
+                eligible_product_ids: $('#eligible_product_ids').val(),
+                eligible_category_ids: $('#eligible_category_ids').val(),
+                usage_limit: $('#usage_limit').val() || null,
+                per_customer_usage_limit: $('#per_customer_usage_limit').val() || null,
+            };
+        }
+
+        function resetCouponForm() {
+            $('#coupon-form')[0].reset();
+            $('#coupon_id').val('');
+            $('#coupon-form-title').text('Create Coupon');
+            $('#discount_type').val('fixed');
+            $('#discount_value').val('0').prop('disabled', false);
+            $('#status').val('inactive');
+        }
+
+        function setCouponForm(coupon) {
+            $('#coupon_id').val(coupon.id);
+            $('#coupon-form-title').text(`Edit Coupon #${coupon.id}`);
+            $('#name').val(coupon.name);
+            $('#code').val(coupon.code);
+            $('#discount_type').val(coupon.discount_type);
+            $('#discount_value').val(money(coupon.discount_value));
+            $('#minimum_order_value').val(coupon.minimum_order_value ?? '');
+            $('#status').val(coupon.status);
+            $('#starts_at').val(normalizeDateTime(coupon.starts_at));
+            $('#ends_at').val(normalizeDateTime(coupon.ends_at));
+            $('#usage_limit').val(coupon.usage_limit ?? '');
+            $('#per_customer_usage_limit').val(coupon.per_customer_usage_limit ?? '');
+            $('#eligible_product_ids').val(commaList(coupon.eligible_product_ids));
+            $('#eligible_category_ids').val(commaList(coupon.eligible_category_ids));
+            toggleDiscountValue();
+        }
+
+        function toggleDiscountValue() {
+            const isFreeDelivery = $('#discount_type').val() === 'free_delivery';
+            $('#discount_value').prop('disabled', isFreeDelivery);
+
+            if (isFreeDelivery) {
+                $('#discount_value').val('0');
+            }
+        }
+
+        function saveCoupon() {
+            const id = $('#coupon_id').val();
+            const url = id ? routeFor(couponRoutes.update, id) : couponRoutes.store;
+            const method = id ? 'PUT' : 'POST';
+
+            return requestJson(url, {
+                method,
+                body: couponPayload(),
+            }).then((body) => {
+                adminToast(body.message || 'Coupon saved successfully.');
+                resetCouponForm();
+                loadCoupons(couponPagination.current_page);
+            }).catch((error) => {
+                adminToast(error.message || 'Unable to save coupon.', 'danger');
+            });
+        }
+
+        function editCoupon(id) {
+            return requestJson(routeFor(couponRoutes.show, id))
+                .then((body) => setCouponForm(body.data))
+                .catch((error) => adminToast(error.message || 'Unable to load coupon.', 'danger'));
+        }
+
+        function toggleCouponStatus(id, status) {
+            const route = status === 'active' ? couponRoutes.deactivate : couponRoutes.activate;
+
+            return requestJson(routeFor(route, id), {
+                method: 'PATCH',
+            }).then((body) => {
+                adminToast(body.message || 'Coupon status updated.');
+                loadCoupons(couponPagination.current_page);
+            }).catch((error) => {
+                adminToast(error.message || 'Unable to update coupon status.', 'danger');
+            });
+        }
+
+        function deleteCoupon(id) {
+            if (!confirm('Delete this coupon?')) {
+                return;
+            }
+
+            return requestJson(routeFor(couponRoutes.destroy, id), {
+                method: 'DELETE',
+            }).then((body) => {
+                adminToast(body.message || 'Coupon deleted successfully.');
+                resetCouponForm();
+                loadCoupons(couponPagination.current_page);
+            }).catch((error) => {
+                adminToast(error.message || 'Unable to delete coupon.', 'danger');
+            });
+        }
+
+        $('#coupon-filter-form').on('submit', function (event) {
+            event.preventDefault();
+            renderCoupons();
+        });
+
+        $('#coupon_search, #coupon_status').on('input change', renderCoupons);
+
+        $('#coupon_per_page').on('change', function () {
+            loadCoupons(1);
+        });
+
+        $('#reset-coupon-filters').on('click', function () {
+            $('#coupon-filter-form')[0].reset();
+            $('#coupon_per_page').val('15');
+            loadCoupons(1);
+        });
+
+        $('#refresh-coupons').on('click', function () {
+            loadCoupons(couponPagination.current_page);
+        });
+
+        $('#new-coupon, #reset-coupon-form').on('click', resetCouponForm);
+
+        $('#discount_type').on('change', toggleDiscountValue);
+
+        $('#code').on('input', function () {
+            $(this).val($(this).val().toUpperCase());
+        });
+
+        $('#coupon-form').on('submit', function (event) {
+            event.preventDefault();
+            saveCoupon();
+        });
+
+        $('#coupon-table-body').on('click', '.edit-coupon', function () {
+            editCoupon($(this).data('id'));
+        });
+
+        $('#coupon-table-body').on('click', '.toggle-coupon-status', function () {
+            toggleCouponStatus($(this).data('id'), $(this).data('status'));
+        });
+
+        $('#coupon-table-body').on('click', '.delete-coupon', function () {
+            deleteCoupon($(this).data('id'));
+        });
+
+        $('#previous-coupon-page').on('click', function () {
+            if (couponPagination.current_page > 1) {
+                loadCoupons(couponPagination.current_page - 1);
+            }
+        });
+
+        $('#next-coupon-page').on('click', function () {
+            if (couponPagination.current_page < couponPagination.last_page) {
+                loadCoupons(couponPagination.current_page + 1);
+            }
+        });
+
+        resetCouponForm();
+        loadCoupons();
+    </script>
+<?php $__env->stopPush(); ?>
+
+<?php echo $__env->make('admin.layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\xampp\htdocs\ecommerce\backend\app\Modules/Promotion/views/coupons/index.blade.php ENDPATH**/ ?>

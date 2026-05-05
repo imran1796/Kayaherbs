@@ -5,6 +5,7 @@ use App\Modules\Catalog\Providers\CatalogServiceProvider;
 use App\Modules\Customer\Providers\CustomerServiceProvider;
 use App\Modules\Inventory\Providers\InventoryServiceProvider;
 use App\Modules\Order\Providers\OrderServiceProvider;
+use App\Modules\Promotion\Providers\PromotionServiceProvider;
 use App\Modules\Reporting\Providers\ReportingServiceProvider;
 use App\Modules\Setting\Providers\SettingServiceProvider;
 use App\Modules\Shipping\Providers\ShippingServiceProvider;
@@ -81,6 +82,14 @@ return [
         'routes' => [
             'web' => 'Modules/Shipping/routes/web.php',
             'api' => 'Modules/Shipping/routes/api.php',
+        ],
+    ],
+    'promotion' => [
+        'name' => 'Promotion',
+        'provider' => PromotionServiceProvider::class,
+        'routes' => [
+            'web' => 'Modules/Promotion/routes/web.php',
+            'api' => 'Modules/Promotion/routes/api.php',
         ],
     ],
     'order' => [

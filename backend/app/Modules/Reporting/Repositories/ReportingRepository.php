@@ -3,6 +3,8 @@
 namespace App\Modules\Reporting\Repositories;
 
 use App\Models\InventoryStock;
+use App\Models\Coupon;
+use App\Models\CouponRedemption;
 use App\Models\Order;
 use App\Models\User;
 use Illuminate\Support\Collection;
@@ -131,9 +133,57 @@ class ReportingRepository
             ->values();
     }
 
+    public function couponSummary(?string $from = null, ?string $to = null): array
+    {
+        $redemptions = $this->couponRedemptionsInRange($from, $to);
+
+        return [
+            'total_coupons' => Coupon::query()->count(),
+            'active_coupons' => Coupon::query()->where('status', Coupon::STATUS_ACTIVE)->count(),
+            'total_redemptions' => $redemptions->count(),
+            'total_discount' => $this->money((float) $redemptions->sum('discount_amount')),
+        ];
+    }
+
+    public function couponPerformanceRows(?string $from = null, ?string $to = null, int $limit = 20): Collection
+    {
+        $redemptions = $this->couponRedemptionsInRange($from, $to)
+            ->get()
+            ->groupBy('coupon_id');
+
+        return Coupon::query()
+            ->orderBy('code')
+            ->get()
+            ->map(function (Coupon $coupon) use ($redemptions): Coupon {
+                $couponRedemptions = $redemptions->get($coupon->id, collect());
+                $coupon->redemptions_count = $couponRedemptions->count();
+                $coupon->discount_total = $couponRedemptions->sum('discount_amount');
+
+                return $coupon;
+            })
+            ->sortByDesc('discount_total')
+            ->take($limit)
+            ->values();
+    }
+
     private function ordersInRange(?string $from = null, ?string $to = null)
     {
         return Order::query()->placedBetween($from, $to);
+    }
+
+    private function couponRedemptionsInRange(?string $from = null, ?string $to = null)
+    {
+        $query = CouponRedemption::query();
+
+        if ($from !== null) {
+            $query->whereDate('redeemed_at', '>=', $from);
+        }
+
+        if ($to !== null) {
+            $query->whereDate('redeemed_at', '<=', $to);
+        }
+
+        return $query;
     }
 
     private function money(float $amount): string

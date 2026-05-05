@@ -2,7 +2,7 @@
 
 @section('title', 'Categories')
 @section('page_title', 'Categories')
-@section('page_subtitle', 'Manage catalog categories with AJAX.')
+@section('page_subtitle', '')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
@@ -17,7 +17,6 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h3 class="card-title">Categories</h3>
-                            <p class="text-secondary mb-0 mt-1">Loaded and managed with AJAX.</p>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-categories">Refresh</button>
                     </div>
@@ -56,28 +55,28 @@
 
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
-                        <input id="name" class="form-control" required>
+                        <input id="name" class="form-control form-control-sm" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="slug" class="form-label">Slug</label>
-                        <input id="slug" class="form-control">
+                        <input id="slug" class="form-control form-control-sm">
                     </div>
 
                     <div class="row g-2">
                         <div class="col-md-6">
                             <label for="parent_id" class="form-label">Parent</label>
-                            <select id="parent_id" class="form-select">
+                            <select id="parent_id" class="form-select form-select-sm js-select2" data-placeholder="None">
                                 <option value="">None</option>
                             </select>
                         </div>
                         <div class="col-md-3">
                             <label for="sort_order" class="form-label">Sort</label>
-                            <input id="sort_order" type="number" min="0" class="form-control" value="0">
+                            <input id="sort_order" type="number" min="0" class="form-control form-control-sm" value="0">
                         </div>
                         <div class="col-md-3">
                             <label for="status" class="form-label">Status</label>
-                            <select id="status" class="form-select">
+                            <select id="status" class="form-select form-select-sm js-select2" data-placeholder="Status">
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
@@ -86,12 +85,12 @@
 
                     <div class="mt-3">
                         <label for="image_path" class="form-label">Image path</label>
-                        <input id="image_path" class="form-control" placeholder="/storage/categories/herbs.jpg">
+                        <input id="image_path" class="form-control form-control-sm" placeholder="/storage/categories/herbs.jpg">
                     </div>
 
                     <div class="mt-3">
                         <label for="description" class="form-label">Description</label>
-                        <textarea id="description" rows="3" class="form-control"></textarea>
+                        <textarea id="description" rows="3" class="form-control form-control-sm"></textarea>
                     </div>
                 </div>
                 <div class="card-footer d-flex justify-content-between">
@@ -103,7 +102,12 @@
     </div>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+@endpush
+
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const categoryRoutes = {
             data: @json(route('admin.categories.data')),
@@ -155,6 +159,20 @@
             });
         }
 
+        function initCategorySelect2() {
+            if (typeof $.fn.select2 !== 'function') {
+                return;
+            }
+
+            $('.js-select2').select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: function () {
+                    return $(this).data('placeholder') || '';
+                },
+            });
+        }
+
         function categoryPayload() {
             return {
                 parent_id: $('#parent_id').val() || null,
@@ -173,6 +191,8 @@
             $('#category-form-title').text('Create Category');
             $('#sort_order').val(0);
             renderParentOptions();
+            $('#parent_id').val('').trigger('change.select2');
+            $('#status').val('active').trigger('change.select2');
         }
 
         function setForm(category) {
@@ -186,6 +206,8 @@
             $('#status').val(category.status || 'active');
             renderParentOptions(category.id);
             $('#parent_id').val(category.parent_id || '');
+            $('#parent_id').trigger('change.select2');
+            $('#status').trigger('change.select2');
         }
 
         function renderParentOptions(currentId = null) {
@@ -195,7 +217,7 @@
                 .map((category) => `<option value="${category.id}">${escapeHtml(category.name)}</option>`)
                 .join('');
 
-            $('#parent_id').html(`<option value="">None</option>${options}`).val(selected);
+            $('#parent_id').html(`<option value="">None</option>${options}`).val(selected).trigger('change.select2');
         }
 
         function renderCategories() {
@@ -275,6 +297,7 @@
 
         $('#refresh-categories').on('click', loadCategories);
         $('#reset-category-form').on('click', resetForm);
+        initCategorySelect2();
         loadCategories().catch((error) => showToast(error.message, 'danger'));
     </script>
 @endpush

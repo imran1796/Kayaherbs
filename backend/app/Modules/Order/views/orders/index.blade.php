@@ -2,7 +2,7 @@
 
 @section('title', 'Orders')
 @section('page_title', 'Orders')
-@section('page_subtitle', 'Review and filter customer orders.')
+@section('page_subtitle', '')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
@@ -15,7 +15,6 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h3 class="card-title">Order List</h3>
-                    <p class="text-secondary mb-0 mt-1">Search by order number, customer name, or customer email.</p>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-orders">Refresh</button>
             </div>
@@ -24,11 +23,11 @@
             <form id="order-filter-form" class="row g-2">
                 <div class="col-md-4">
                     <label for="order_search" class="form-label">Search</label>
-                    <input id="order_search" class="form-control" placeholder="Order number, customer, email">
+                    <input id="order_search" class="form-control form-control-sm" placeholder="Order number, customer, email">
                 </div>
                 <div class="col-md-2">
                     <label for="order_status" class="form-label">Status</label>
-                    <select id="order_status" class="form-select">
+                    <select id="order_status" class="form-select form-select-sm js-select2" data-placeholder="Any">
                         <option value="">Any</option>
                         <option value="pending">Pending</option>
                         <option value="confirmed">Confirmed</option>
@@ -44,7 +43,7 @@
                 </div>
                 <div class="col-md-2">
                     <label for="payment_status" class="form-label">Payment</label>
-                    <select id="payment_status" class="form-select">
+                    <select id="payment_status" class="form-select form-select-sm js-select2" data-placeholder="Any">
                         <option value="">Any</option>
                         <option value="pending">Pending</option>
                         <option value="authorized">Authorized</option>
@@ -55,7 +54,7 @@
                 </div>
                 <div class="col-md-2">
                     <label for="fulfillment_status" class="form-label">Fulfillment</label>
-                    <select id="fulfillment_status" class="form-select">
+                    <select id="fulfillment_status" class="form-select form-select-sm js-select2" data-placeholder="Any">
                         <option value="">Any</option>
                         <option value="unfulfilled">Unfulfilled</option>
                         <option value="processing">Processing</option>
@@ -104,7 +103,12 @@
     </div>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+@endpush
+
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const orderRoutes = {
             data: @json(route('admin.orders.data')),
@@ -144,6 +148,20 @@
 
         function routeFor(template, id) {
             return template.replace('__ID__', id);
+        }
+
+        function initOrderSelect2() {
+            if (typeof $.fn.select2 !== 'function') {
+                return;
+            }
+
+            $('.js-select2').select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: function () {
+                    return $(this).data('placeholder') || '';
+                },
+            });
         }
 
         function filterParams(page) {
@@ -216,6 +234,7 @@
         });
         $('#reset-order-filters').on('click', function () {
             $('#order-filter-form')[0].reset();
+            $('#order_status, #payment_status, #fulfillment_status').trigger('change.select2');
             loadOrders(1);
         });
         $('#load-more-orders').on('click', function () {
@@ -223,6 +242,7 @@
                 loadOrders(currentPage + 1, true);
             }
         });
+        initOrderSelect2();
         loadOrders();
     </script>
 @endpush

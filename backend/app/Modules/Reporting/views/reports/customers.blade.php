@@ -22,11 +22,11 @@
             <form id="customer-report-filter-form" class="row g-2">
                 <div class="col-md-3">
                     <label for="customers_from" class="form-label">From</label>
-                    <input id="customers_from" type="date" class="form-control">
+                    <input id="customers_from" type="date" class="form-control form-control-sm">
                 </div>
                 <div class="col-md-3">
                     <label for="customers_to" class="form-label">To</label>
-                    <input id="customers_to" type="date" class="form-control">
+                    <input id="customers_to" type="date" class="form-control form-control-sm">
                 </div>
                 <div class="col-md-6 d-flex align-items-end gap-2">
                     <button type="submit" class="btn btn-primary">Apply</button>

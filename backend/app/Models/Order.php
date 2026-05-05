@@ -14,6 +14,8 @@ class Order extends Model
         'order_number',
         'user_id',
         'cart_id',
+        'coupon_id',
+        'coupon_code',
         'idempotency_key',
         'status',
         'payment_status',
@@ -24,6 +26,7 @@ class Order extends Model
         'payment_method_name',
         'subtotal',
         'shipping_total',
+        'discount_total',
         'grand_total',
         'currency',
         'shipping_address',
@@ -46,6 +49,7 @@ class Order extends Model
         return [
             'subtotal' => 'decimal:2',
             'shipping_total' => 'decimal:2',
+            'discount_total' => 'decimal:2',
             'grand_total' => 'decimal:2',
             'shipping_address' => 'array',
             'billing_address' => 'array',
@@ -71,6 +75,11 @@ class Order extends Model
     public function cart(): BelongsTo
     {
         return $this->belongsTo(Cart::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function items(): HasMany

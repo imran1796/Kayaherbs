@@ -79,6 +79,14 @@
                         </a>
                     </li>
                 @endcan
+                @can('coupons.view')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.coupons.index') }}" class="nav-link {{ request()->routeIs('admin.coupons.*') ? 'active' : '' }}">
+                            <span class="nav-icon app-icon" aria-hidden="true">%</span>
+                            <p>Coupons</p>
+                        </a>
+                    </li>
+                @endcan
                 @can('reports.view')
                     <li class="nav-item">
                         <a href="{{ route('admin.reports.sales') }}" class="nav-link {{ request()->routeIs('admin.reports.*') ? 'active' : '' }}">

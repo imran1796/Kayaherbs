@@ -3,9 +3,12 @@
 namespace App\Modules\Cart\Services;
 
 use App\Models\Cart;
+use App\Models\Coupon;
 use App\Models\ProductVariant;
 use App\Models\User;
 use App\Modules\Cart\Repositories\CartRepository;
+use App\Modules\Promotion\Repositories\CouponRepository;
+use App\Modules\Promotion\Services\CouponEligibilityService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -15,7 +18,9 @@ class CartService
     public const MAX_CART_LINES = 50;
 
     public function __construct(
-        private readonly CartRepository $carts
+        private readonly CartRepository $carts,
+        private readonly CouponRepository $coupons,
+        private readonly CouponEligibilityService $couponEligibility
     ) {}
 
     public function createGuestCart(): Cart
@@ -101,7 +106,7 @@ class CartService
             $cart = $this->carts->refreshGuestCartExpiry($this->carts->findActiveGuestCart($token));
             $this->carts->clearItems($cart);
 
-            return $this->carts->reload($cart);
+            return $this->carts->removeCoupon($cart);
         });
     }
 
@@ -111,7 +116,47 @@ class CartService
             $cart = $this->carts->findActiveCustomerCart($customer);
             $this->carts->clearItems($cart);
 
-            return $this->carts->reload($cart);
+            return $this->carts->removeCoupon($cart);
+        });
+    }
+
+    public function applyGuestCoupon(string $token, string $code): Cart
+    {
+        return DB::transaction(function () use ($token, $code): Cart {
+            $cart = $this->recalculateCart($this->carts->refreshGuestCartExpiry($this->carts->findActiveGuestCart($token)));
+            $coupon = $this->coupons->findByCodeOrFail($code);
+
+            $this->ensureCouponCanApply($coupon, $cart);
+
+            return $this->carts->applyCoupon($cart, $coupon->id, $coupon->code);
+        });
+    }
+
+    public function removeGuestCoupon(string $token): Cart
+    {
+        return DB::transaction(function () use ($token): Cart {
+            $cart = $this->carts->refreshGuestCartExpiry($this->carts->findActiveGuestCart($token));
+
+            return $this->carts->removeCoupon($cart);
+        });
+    }
+
+    public function applyCustomerCoupon(User $customer, string $code): Cart
+    {
+        return DB::transaction(function () use ($customer, $code): Cart {
+            $cart = $this->recalculateCart($this->carts->findActiveCustomerCart($customer));
+            $coupon = $this->coupons->findByCodeOrFail($code);
+
+            $this->ensureCouponCanApply($coupon, $cart, $customer);
+
+            return $this->carts->applyCoupon($cart, $coupon->id, $coupon->code);
+        });
+    }
+
+    public function removeCustomerCoupon(User $customer): Cart
+    {
+        return DB::transaction(function () use ($customer): Cart {
+            return $this->carts->removeCoupon($this->carts->findActiveCustomerCart($customer));
         });
     }
 
@@ -191,6 +236,17 @@ class CartService
         if ($quantity > $stock->available_quantity) {
             throw ValidationException::withMessages([
                 'quantity' => ['Requested quantity is not available.'],
+            ]);
+        }
+    }
+
+    private function ensureCouponCanApply(Coupon $coupon, Cart $cart, ?User $customer = null): void
+    {
+        $result = $this->couponEligibility->validateForCart($coupon, $cart, $customer);
+
+        if (! $result['eligible']) {
+            throw ValidationException::withMessages([
+                'code' => $result['reasons'],
             ]);
         }
     }

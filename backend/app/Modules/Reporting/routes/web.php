@@ -16,8 +16,9 @@ Route::prefix('reports')->name('reports.')->middleware(['auth', 'admin', 'can:re
 
     Route::get('/customers', [ReportManagementController::class, 'customers'])->name('customers');
     Route::get('/customers/data', [ReportingController::class, 'customers'])->name('customers.data');
+    Route::get('/coupons/data', [ReportingController::class, 'coupons'])->name('coupons.data');
 
     Route::get('/{report}/export', [ReportingController::class, 'export'])
-        ->whereIn('report', ['sales', 'orders', 'inventory', 'customers'])
+        ->whereIn('report', ['sales', 'orders', 'inventory', 'customers', 'coupons'])
         ->name('export');
 });

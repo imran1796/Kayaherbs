@@ -57,6 +57,14 @@ class ReportingController extends Controller
         );
     }
 
+    public function coupons(ReportDateRangeRequest $request)
+    {
+        return ApiResponse::success(
+            $this->reports->couponReport($request->validated('from'), $request->validated('to')),
+            'Coupon report fetched successfully.'
+        );
+    }
+
     public function export(ReportDateRangeRequest $request, string $report)
     {
         $export = $this->reports->export(

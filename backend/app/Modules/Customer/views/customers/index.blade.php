@@ -2,7 +2,7 @@
 
 @section('title', 'Customers')
 @section('page_title', 'Customers')
-@section('page_subtitle', 'Search and review customer accounts.')
+@section('page_subtitle', '')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
@@ -15,7 +15,6 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h3 class="card-title">Customer List</h3>
-                    <p class="text-secondary mb-0 mt-1">Customer profile, status, and order count.</p>
                 </div>
                 <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-customers">Refresh</button>
             </div>
@@ -24,11 +23,11 @@
             <form id="customer-filter-form" class="row g-2 align-items-end">
                 <div class="col-md-8">
                     <label for="customer_search" class="form-label">Search</label>
-                    <input id="customer_search" class="form-control" placeholder="Name, email, or phone">
+                    <input id="customer_search" class="form-control form-control-sm" placeholder="Name, email, or phone">
                 </div>
                 <div class="col-md-4">
                     <label for="customer_status_filter" class="form-label">Status</label>
-                    <select id="customer_status_filter" class="form-select">
+                    <select id="customer_status_filter" class="form-select form-select-sm js-select2" data-placeholder="All statuses">
                         <option value="">All statuses</option>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
@@ -66,7 +65,12 @@
     </div>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+@endpush
+
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const customerRoutes = {
             data: @json(route('admin.customers.data')),
@@ -75,6 +79,20 @@
 
         function routeFor(template, id) {
             return template.replace('__ID__', id);
+        }
+
+        function initCustomerSelect2() {
+            if (typeof $.fn.select2 !== 'function') {
+                return;
+            }
+
+            $('.js-select2').select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: function () {
+                    return $(this).data('placeholder') || '';
+                },
+            });
         }
 
         function escapeHtml(value) {
@@ -148,9 +166,10 @@
         });
         $('#clear-customer-filters').on('click', function () {
             $('#customer_search').val('');
-            $('#customer_status_filter').val('');
+            $('#customer_status_filter').val('').trigger('change.select2');
             loadCustomers();
         });
+        initCustomerSelect2();
         loadCustomers();
     </script>
 @endpush

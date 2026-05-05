@@ -24,9 +24,14 @@ class OrderResource extends JsonResource
                 'code' => $this->payment_method_code,
                 'name' => $this->payment_method_name,
             ],
+            'coupon' => $this->coupon_code === null ? null : [
+                'id' => $this->coupon_id,
+                'code' => $this->coupon_code,
+            ],
             'totals' => [
                 'subtotal' => $this->subtotal,
                 'shipping_total' => $this->shipping_total,
+                'discount_total' => $this->discount_total,
                 'grand_total' => $this->grand_total,
                 'currency' => $this->currency,
             ],

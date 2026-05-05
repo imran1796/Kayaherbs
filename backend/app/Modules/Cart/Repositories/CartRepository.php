@@ -25,7 +25,7 @@ class CartRepository
             ->where('cart_token', $token)
             ->active()
             ->notExpired()
-            ->with('items')
+            ->with(['coupon', 'items.product.categories'])
             ->firstOrFail();
     }
 
@@ -37,7 +37,7 @@ class CartRepository
             ])->save();
         }
 
-        return $cart->refresh()->load('items');
+        return $cart->refresh()->load(['coupon', 'items.product.categories']);
     }
 
     public function findOrCreateCustomerCart(User $customer): Cart
@@ -51,14 +51,14 @@ class CartRepository
             ]);
         }
 
-        return $cart->load('items');
+        return $cart->load(['coupon', 'items.product.categories']);
     }
 
     public function findActiveCustomerCart(User $customer): Cart
     {
         return $this->activeCustomerCartQuery($customer)
             ->firstOrFail()
-            ->load('items');
+            ->load(['coupon', 'items.product.categories']);
     }
 
     public function findSellableVariant(int $variantId): ProductVariant
@@ -138,9 +138,29 @@ class CartRepository
         $cart->items()->delete();
     }
 
+    public function applyCoupon(Cart $cart, int $couponId, string $couponCode): Cart
+    {
+        $cart->update([
+            'coupon_id' => $couponId,
+            'coupon_code' => $couponCode,
+        ]);
+
+        return $this->reload($cart);
+    }
+
+    public function removeCoupon(Cart $cart): Cart
+    {
+        $cart->update([
+            'coupon_id' => null,
+            'coupon_code' => null,
+        ]);
+
+        return $this->reload($cart);
+    }
+
     public function reload(Cart $cart): Cart
     {
-        return $cart->refresh()->load('items');
+        return $cart->refresh()->load(['coupon', 'items.product.categories']);
     }
 
     private function activeCustomerCartQuery(User $customer)

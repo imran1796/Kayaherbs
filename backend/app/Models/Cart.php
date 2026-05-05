@@ -12,6 +12,8 @@ class Cart extends Model
     protected $fillable = [
         'cart_token',
         'user_id',
+        'coupon_id',
+        'coupon_code',
         'status',
         'expires_at',
     ];
@@ -26,6 +28,11 @@ class Cart extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function coupon(): BelongsTo
+    {
+        return $this->belongsTo(Coupon::class);
     }
 
     public function items(): HasMany

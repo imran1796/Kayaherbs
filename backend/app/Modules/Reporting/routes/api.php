@@ -9,4 +9,5 @@ Route::prefix('reports')->name('reports.')->middleware(['auth:sanctum', 'admin',
     Route::get('/sales', [ReportingController::class, 'sales'])->name('sales');
     Route::get('/inventory', [ReportingController::class, 'inventory'])->name('inventory');
     Route::get('/customers', [ReportingController::class, 'customers'])->name('customers');
+    Route::get('/coupons', [ReportingController::class, 'coupons'])->name('coupons');
 });

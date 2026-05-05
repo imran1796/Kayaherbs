@@ -108,6 +108,30 @@ class ReportingService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function couponReport(?string $from = null, ?string $to = null): array
+    {
+        return [
+            'summary' => $this->reports->couponSummary($from, $to),
+            'coupons' => $this->reports->couponPerformanceRows($from, $to)
+                ->map(fn ($coupon): array => [
+                    'id' => $coupon->id,
+                    'code' => $coupon->code,
+                    'name' => $coupon->name,
+                    'status' => $coupon->status,
+                    'lifecycle_status' => $coupon->lifecycle_status,
+                    'discount_type' => $coupon->discount_type,
+                    'used_count' => $coupon->used_count,
+                    'redemptions_count' => (int) $coupon->redemptions_count,
+                    'discount_total' => number_format((float) $coupon->discount_total, 2, '.', ''),
+                ])
+                ->values()
+                ->all(),
+        ];
+    }
+
+    /**
      * @return array{filename: string, headers: list<string>, rows: list<list<string|int|float|null>>}
      */
     public function export(string $report, ?string $from = null, ?string $to = null): array
@@ -117,6 +141,7 @@ class ReportingService
             'orders' => $this->ordersExport($from, $to),
             'inventory' => $this->inventoryExport(),
             'customers' => $this->customersExport($from, $to),
+            'coupons' => $this->couponsExport($from, $to),
             default => abort(404),
         };
     }
@@ -182,6 +207,24 @@ class ReportingService
                 $row['email'],
                 $row['orders_count'],
                 $row['total_spent'],
+            ])->all(),
+        ];
+    }
+
+    private function couponsExport(?string $from, ?string $to): array
+    {
+        $report = $this->couponReport($from, $to);
+
+        return [
+            'filename' => 'coupons-report.csv',
+            'headers' => ['code', 'name', 'status', 'discount_type', 'redemptions_count', 'discount_total'],
+            'rows' => collect($report['coupons'])->map(fn (array $row): array => [
+                $row['code'],
+                $row['name'],
+                $row['status'],
+                $row['discount_type'],
+                $row['redemptions_count'],
+                $row['discount_total'],
             ])->all(),
         ];
     }

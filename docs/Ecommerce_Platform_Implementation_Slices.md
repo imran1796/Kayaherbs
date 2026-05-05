@@ -1124,7 +1124,7 @@ Short coverage log for completed implementation slices.
 
 **Verification:** covered by `php artisan test tests\Feature\CartQuantityAndPricingTest.php`.
 
-**Not covered yet:** discounts, coupons, taxes, shipping charges, currency conversion, and price change warnings.
+**Not covered yet:** taxes, shipping charges, currency conversion, and price change warnings. Coupon discounts are covered in current master B8.7 and B8.8 below.
 
 ## B7.7 Unavailable Item Handling
 
@@ -1172,7 +1172,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** guest cart merge after login, abandoned cart reminders, cart restore emails, multi-device conflict resolution, and manual cart archive/restore.
 
-## B8.1 Checkout Validation Pipeline
+## Legacy Checkout Slice B8.1 Checkout Validation Pipeline
 
 **Covers:**
 
@@ -1199,7 +1199,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** shipping methods, payment methods, order creation, stock reservation, idempotency, rollback, and confirmation events.
 
-## B8.2 Address Selection And Creation Flow
+## Legacy Checkout Slice B8.2 Address Selection And Creation Flow
 
 **Covers:**
 
@@ -1217,7 +1217,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** checkout-only unsaved address snapshots, delivery-zone validation, shipping rate lookup, and order address snapshot capture.
 
-## B8.3 Shipping Resolution Flow
+## Legacy Checkout Slice B8.3 Shipping Resolution Flow
 
 **Covers:**
 
@@ -1240,7 +1240,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** database-managed shipping methods, zones, weight rules, free-shipping rules, courier integration, and admin shipping UI.
 
-## B8.4 Payment Method Resolution Flow
+## Legacy Checkout Slice B8.4 Payment Method Resolution Flow
 
 **Covers:**
 
@@ -1259,7 +1259,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** payment provider integration, online payment authorization, payment fees, payment status records, and admin payment method UI.
 
-## B8.5 Order Draft To Order Creation Transaction
+## Legacy Checkout Slice B8.5 Order Draft To Order Creation Transaction
 
 **Covers:**
 
@@ -1298,7 +1298,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** payment authorization, admin order UI, and customer order history endpoint.
 
-## B8.6 Order Item Snapshot Capture
+## Legacy Checkout Slice B8.6 Order Item Snapshot Capture
 
 **Covers:**
 
@@ -1320,7 +1320,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** tax line snapshots, discount snapshots, shipment item snapshots, and product option snapshots.
 
-## B8.7 Idempotent Checkout Submission Handling
+## Legacy Checkout Slice B8.7 Idempotent Checkout Submission Handling
 
 **Covers:**
 
@@ -1335,7 +1335,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** idempotency expiry policy, request payload hash comparison, and cross-device idempotency reporting.
 
-## B8.8 Rollback And Compensation Rules
+## Legacy Checkout Slice B8.8 Rollback And Compensation Rules
 
 **Covers:**
 
@@ -1352,7 +1352,7 @@ Short coverage log for completed implementation slices.
 
 **Not covered yet:** external payment compensation, shipment cancellation, and manual recovery tools.
 
-## B8.9 Order Confirmation Event Generation
+## Legacy Checkout Slice B8.9 Order Confirmation Event Generation
 
 **Covers:**
 
@@ -2491,3 +2491,456 @@ Short coverage log for completed implementation slices.
 **Verification:** covered by `php artisan test tests\Feature\ReportingDashboardTest.php`.
 
 **Not covered yet:** queued export jobs, XLSX export, export history, large-file storage, and separate export permission.
+
+## Current Master B8 Promotions And Coupons Domain
+
+The master project plan now uses B8 for baseline promotions and coupons. Older sections in this implementation log used B8 for checkout before the promotion module was inserted into the master sequence.
+
+## B8.1 Coupon Entity, Code Uniqueness, And Status Lifecycle
+
+**Covers:**
+
+- Coupon table and model:
+  - `backend/database/migrations/2026_05_05_000001_create_coupons_table.php`
+  - `backend/app/Models/Coupon.php`
+- Unique normalized coupon codes.
+- Coupon status values: `active`, `inactive`.
+- Derived lifecycle status: `inactive`, `scheduled`, `active`, `expired`.
+- Promotion module registration:
+  - `backend/app/Modules/Promotion`
+  - `backend/config/modules.php`
+- Admin coupon list/detail API:
+  - `GET /api/v1/coupons`
+  - `GET /api/v1/coupons/{id}`
+- Feature tests: `backend/tests/Feature/CouponFoundationTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+**Not covered yet:** coupon admin Blade list/create/edit screens.
+
+## B8.2 Fixed, Percentage, And Free-Delivery Discount Types
+
+**Covers:**
+
+- Supported discount types:
+  - `fixed`
+  - `percentage`
+  - `free_delivery`
+- Request validation:
+  - `backend/app/Modules/Promotion/Requests/StoreCouponRequest.php`
+  - `backend/app/Modules/Promotion/Requests/UpdateCouponRequest.php`
+- Free-delivery coupons normalize `discount_value` to `0.00`.
+- Percentage coupons reject values greater than 100.
+- Feature tests: `backend/tests/Feature/CouponFoundationTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+**Not covered yet:** checkout shipment discount line display beyond totals.
+
+## B8.3 Coupon Start/End Date And Scheduled Activation/Expiration Behavior
+
+**Covers:**
+
+- Nullable `starts_at` and `ends_at` fields on coupons.
+- Lifecycle status changes based on current time:
+  - future active coupon returns `scheduled`
+  - past active coupon returns `expired`
+- Activate/deactivate APIs:
+  - `PATCH /api/v1/coupons/{id}/activate`
+  - `PATCH /api/v1/coupons/{id}/deactivate`
+- Feature tests: `backend/tests/Feature/CouponFoundationTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+**Not covered yet:** scheduled command to automatically flip stored coupon status.
+
+## B8.4 Minimum Order Value And Cart Eligibility Validation
+
+**Covers:**
+
+- Coupon eligibility fields:
+  - `minimum_order_value`
+  - `eligible_product_ids`
+  - `eligible_category_ids`
+  - `usage_limit`
+  - `per_customer_usage_limit`
+  - `used_count`
+- Migration:
+  - `backend/database/migrations/2026_05_05_000002_add_eligibility_fields_to_coupons_table.php`
+- Coupon eligibility service:
+  - `backend/app/Modules/Promotion/Services/CouponEligibilityService.php`
+- Minimum order value is checked against available cart subtotal.
+- Feature tests: `backend/tests/Feature/CouponEligibilityTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponEligibilityTest.php`.
+
+**Not covered yet:** tax-inclusive or shipping-inclusive minimum order modes.
+
+## B8.5 Product/Category Eligibility Rules Where Enabled
+
+**Covers:**
+
+- Product targeting through `eligible_product_ids`.
+- Category targeting through `eligible_category_ids`.
+- Cart item product categories are loaded through cart repository relations.
+- Eligibility fails when no available cart item matches configured product/category rules.
+- Feature tests: `backend/tests/Feature/CouponEligibilityTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponEligibilityTest.php`.
+
+**Not covered yet:** exclusion rules, brand rules, vendor rules, and nested category inheritance.
+
+## B8.6 Total Usage Limit And Per-Customer Usage Limit Enforcement
+
+**Covers:**
+
+- Coupon redemption table/model:
+  - `backend/database/migrations/2026_05_05_000003_create_coupon_redemptions_table.php`
+  - `backend/app/Models/CouponRedemption.php`
+- Usage checks:
+  - total usage via `usage_limit` and `used_count`
+  - per-customer usage via coupon redemption count
+- Repository layer:
+  - `backend/app/Modules/Promotion/Repositories/CouponRepository.php`
+  - `backend/app/Modules/Promotion/Repositories/CouponRedemptionRepository.php`
+- Feature tests: `backend/tests/Feature/CouponEligibilityTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponEligibilityTest.php`.
+
+**Not covered yet:** guest-only per-device or per-phone usage rules.
+
+## B8.7 Cart Coupon Apply/Remove Flow For Guest And Customer Carts
+
+**Covers:**
+
+- Cart coupon fields:
+  - `coupon_id`
+  - `coupon_code`
+- Migration:
+  - `backend/database/migrations/2026_05_05_000004_add_coupon_fields_to_carts_table.php`
+- Request:
+  - `backend/app/Modules/Cart/Requests/ApplyCouponRequest.php`
+- Guest endpoints:
+  - `POST /api/v1/cart/guest/{cartToken}/coupon`
+  - `DELETE /api/v1/cart/guest/{cartToken}/coupon`
+- Customer endpoints:
+  - `POST /api/v1/customer/cart/coupon`
+  - `DELETE /api/v1/customer/cart/coupon`
+- Cart service/repository apply/remove flow.
+- Feature tests: `backend/tests/Feature/CartCouponFlowTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CartCouponFlowTest.php`.
+
+**Not covered yet:** storefront UI coupon form.
+
+## B8.8 Discount Calculation Integration With Cart Totals And Checkout Totals
+
+**Covers:**
+
+- Coupon discount calculation service:
+  - `backend/app/Modules/Promotion/Services/CouponDiscountService.php`
+- Cart responses include:
+  - `subtotal`
+  - `discount_total`
+  - `grand_total`
+  - `coupon`
+- Checkout validation/submit totals include `discount_total`.
+- Order discount snapshot fields:
+  - `coupon_id`
+  - `coupon_code`
+  - `discount_total`
+- Migration:
+  - `backend/database/migrations/2026_05_05_000005_add_discount_fields_to_orders_table.php`
+- Feature tests:
+  - `backend/tests/Feature/CartCouponFlowTest.php`
+  - `backend/tests/Feature/CheckoutOrderCreationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CartCouponFlowTest.php tests\Feature\CheckoutOrderCreationTest.php`.
+
+**Not covered yet:** item-level discount allocation and tax line interaction.
+
+## B8.9 Coupon Redemption Recording During Order Creation
+
+**Covers:**
+
+- Coupon redemption service:
+  - `backend/app/Modules/Promotion/Services/CouponRedemptionService.php`
+- Checkout creates a coupon redemption when a newly created order has `coupon_id` and `discount_total`.
+- Redemption records store:
+  - coupon
+  - customer
+  - order
+  - discount amount
+  - redeemed timestamp
+- Idempotent checkout retry does not create a second redemption.
+- Feature tests: `backend/tests/Feature/CartCouponFlowTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CartCouponFlowTest.php`.
+
+**Not covered yet:** redemption void/reversal when orders are cancelled.
+
+## B8.10 Atomic Usage Count Updates Inside Checkout/Order Transaction
+
+**Covers:**
+
+- Coupon row is locked before redemption count mutation.
+- Usage limits are rechecked inside the checkout transaction.
+- `used_count` increments only after redemption is created.
+- If usage is exhausted between cart apply and checkout submit, checkout fails and order creation rolls back.
+- Feature tests: `backend/tests/Feature/CartCouponFlowTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CartCouponFlowTest.php`.
+
+**Not covered yet:** high-concurrency stress tests beyond transactional feature coverage.
+
+## B8.11 Coupon Audit Events For Create/Update/Delete/Activate/Deactivate
+
+**Covers:**
+
+- Coupon service records audit events through `App\Core\Services\AuditLogger`.
+- Events:
+  - `coupon.created`
+  - `coupon.updated`
+  - `coupon.activated`
+  - `coupon.deactivated`
+  - `coupon.deleted`
+- Audit metadata includes coupon code, status, discount type, and changed keys where relevant.
+- Feature tests: `backend/tests/Feature/CouponFoundationTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+**Not covered yet:** admin audit log viewer filtering by coupon.
+
+## B8.12 Basic Coupon Performance Data For Reporting
+
+**Covers:**
+
+- Coupon report API:
+  - `GET /api/v1/reports/coupons`
+- Coupon report web data endpoint:
+  - `GET /admin/reports/coupons/data`
+- Coupon export support through:
+  - `GET /admin/reports/coupons/export`
+- Report returns:
+  - total coupons
+  - active coupons
+  - total redemptions
+  - total discount
+  - per-coupon redemption count and discount total
+- Files:
+  - `backend/app/Modules/Reporting/Repositories/ReportingRepository.php`
+  - `backend/app/Modules/Reporting/Services/ReportingService.php`
+  - `backend/app/Modules/Reporting/Controllers/ReportingController.php`
+  - `backend/app/Modules/Reporting/routes/api.php`
+  - `backend/app/Modules/Reporting/routes/web.php`
+- Feature tests: `backend/tests/Feature/ReportingDashboardTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\ReportingDashboardTest.php`.
+
+**Not covered yet:** full admin coupon report Blade screen and charts.
+
+## B8.13 Product Offer Price, Flash Sale, And Campaign Banner Baseline Alignment
+
+**Covers:**
+
+- Product pricing already has baseline price/compare-at-price support through catalog variants.
+- Store module toggles include `coupons`.
+- Homepage promotional blocks remain planned for storefront/CMS work.
+
+**Verification:** partially covered by catalog, settings, and coupon tests.
+
+**Not covered yet:** dedicated flash sale engine, campaign scheduling tables, campaign landing pages, and banner-to-coupon targeting.
+
+## A8 Promotions And Coupons APIs
+
+**Covers:**
+
+- [DONE] `A8.1` admin coupon list/detail APIs.
+- [DONE] `A8.2` admin coupon create/update/delete APIs.
+- [DONE] `A8.3` admin coupon activate/deactivate APIs.
+- [DONE] `A8.4` guest cart apply/remove coupon APIs.
+- [DONE] `A8.5` customer cart apply/remove coupon APIs.
+- [DONE] `A8.6` coupon validation through cart apply and checkout revalidation.
+- [DONE] `A8.7` coupon redemption/usage reporting API.
+- [PARTIAL] `A8.8` API documentation includes coupon endpoints and examples; OpenAPI/Postman examples still need to be regenerated.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php tests\Feature\CouponEligibilityTest.php tests\Feature\CartCouponFlowTest.php tests\Feature\ReportingDashboardTest.php`.
+
+## F10.1 Coupon List Screen
+
+**Covers:**
+
+- [DONE] Admin coupon list screen at `GET /admin/coupons`.
+- [DONE] Coupon page route uses `auth`, `admin`, and `can:coupons.view` middleware.
+- [DONE] List data is loaded from the existing coupon data endpoint instead of querying Eloquent from the view.
+- [DONE] Screen shows coupon code, name, discount type/value, minimum order value, lifecycle status, schedule, and usage.
+- [DONE] Client-side search/status filters, refresh, row count, and pagination controls.
+- Files:
+  - `backend/app/Modules/Promotion/Providers/PromotionServiceProvider.php`
+  - `backend/app/Modules/Promotion/Controllers/CouponManagementController.php`
+  - `backend/app/Modules/Promotion/routes/web.php`
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/resources/views/admin/layouts/sidebar.blade.php`
+  - `backend/config/modules.php`
+- Feature tests: `backend/tests/Feature/CouponFoundationTest.php`.
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.2 Coupon Create/Edit Form
+
+**Covers:**
+
+- [DONE] Coupon create/edit form embedded in the admin coupon screen.
+- [DONE] Form fields cover name, code, discount type/value, minimum order value, status, start/end dates, usage limits, product IDs, and category IDs.
+- [DONE] Existing coupon rows can hydrate the form through the coupon detail endpoint.
+- [DONE] Save flow uses existing `POST /admin/coupons` and `PUT /admin/coupons/{id}` routes.
+- [DONE] Free-delivery selection disables discount value and sends `0`.
+- Files:
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.3 Coupon Status Controls For Activate/Deactivate/Archive/Delete
+
+**Covers:**
+
+- [DONE] Coupon table row actions include edit, activate/deactivate, and delete controls.
+- [DONE] Activate/deactivate actions call the existing `PATCH /admin/coupons/{id}/activate` and `PATCH /admin/coupons/{id}/deactivate` routes.
+- [DONE] Delete action calls the existing `DELETE /admin/coupons/{id}` route after confirmation.
+- [DONE] Controls are permission-aware through `coupons.update` and `coupons.delete`.
+- [DONE] Row actions refresh the list after successful mutation.
+- Files:
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.4 Coupon Rule Fields
+
+**Covers:**
+
+- [DONE] Coupon form includes discount type, discount value, minimum order value, active/inactive status, starts/ends date window, total usage limit, and per-customer usage limit fields.
+- [DONE] Free-delivery selection disables discount value and submits `0`.
+- [DONE] Date fields use `datetime-local` controls and hydrate from coupon detail data.
+- Files:
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.5 Product/Category Eligibility Selectors
+
+**Covers:**
+
+- [DONE] Coupon form provides multi-select product eligibility control.
+- [DONE] Coupon form provides multi-select category eligibility control.
+- [DONE] Product and category options are loaded through existing catalog services in the coupon management controller.
+- [DONE] Existing coupon eligibility arrays hydrate selected options on edit.
+- Files:
+  - `backend/app/Modules/Promotion/Controllers/CouponManagementController.php`
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.6 Coupon Redemption/Usage Detail Screen
+
+**Covers:**
+
+- [DONE] Coupon management screen includes a usage detail panel.
+- [DONE] Each coupon row has a usage action that shows code, lifecycle, used count, usage limit, per-customer limit, redemption count, discount total, and configured product/category eligibility.
+- [DONE] Usage detail combines coupon list/detail data with coupon report performance data.
+- Files:
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.7 Coupon Performance Summary Widgets
+
+**Covers:**
+
+- [DONE] Coupon management screen includes summary widgets for total coupons, active coupons, total redemptions, and total discount.
+- [DONE] Top coupon performance table shows code, status, redemption count, and discount total.
+- [DONE] Performance data is supplied by `ReportingService::couponReport`.
+- Files:
+  - `backend/app/Modules/Promotion/Controllers/CouponManagementController.php`
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## F10.8 Coupon Validation, Permission, Audit, Empty, And Error States
+
+**Covers:**
+
+- [DONE] Coupon form displays inline validation/error feedback from API responses.
+- [DONE] Coupon screen shows permission notices for create/update restrictions.
+- [DONE] Row actions expose a view-only state when update/delete permissions are missing.
+- [DONE] Coupon list, performance table, and audit table have empty states.
+- [DONE] Coupon screen includes recent coupon audit events for create/update/delete/activate/deactivate actions.
+- [DONE] Audit feed is supplied through Promotion repository/service classes instead of view-level model queries.
+- Files:
+  - `backend/app/Modules/Promotion/Repositories/CouponAuditRepository.php`
+  - `backend/app/Modules/Promotion/Services/CouponAuditService.php`
+  - `backend/app/Modules/Promotion/Controllers/CouponManagementController.php`
+  - `backend/app/Modules/Promotion/views/coupons/index.blade.php`
+  - `backend/tests/Feature/CouponFoundationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CouponFoundationTest.php`.
+
+## A9.5 Checkout Coupon Revalidation And Discount Response Fields
+
+**Covers:**
+
+- [DONE] Checkout validation rechecks the applied coupon before totals are returned.
+- [DONE] Checkout submit rechecks the applied coupon inside the order transaction.
+- [DONE] Checkout responses include discount-aware totals through `discount_total`.
+- [DONE] Checkout failures return validation errors when a coupon becomes expired, inactive, ineligible, or usage-limited.
+- Files:
+  - `backend/app/Modules/Checkout/Services/CheckoutService.php`
+  - `backend/app/Modules/Cart/Resources/CartResource.php`
+  - `backend/app/Modules/Promotion/Services/CouponEligibilityService.php`
+  - `backend/app/Modules/Promotion/Services/CouponDiscountService.php`
+- Feature tests:
+  - `backend/tests/Feature/CartCouponFlowTest.php`
+  - `backend/tests/Feature/CheckoutOrderCreationTest.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CartCouponFlowTest.php tests\Feature\CheckoutOrderCreationTest.php`.
+
+## A10.7 Order Discount/Coupon Snapshot Fields
+
+**Covers:**
+
+- [DONE] Customer order responses expose coupon snapshot data.
+- [DONE] Admin order responses expose coupon snapshot data.
+- [DONE] Order totals expose `discount_total`.
+- Snapshot fields are stored on the order:
+  - `coupon_id`
+  - `coupon_code`
+  - `discount_total`
+- Files:
+  - `backend/app/Models/Order.php`
+  - `backend/app/Modules/Checkout/Resources/OrderResource.php`
+  - `backend/app/Modules/Order/Resources/AdminOrderResource.php`
+  - `backend/database/migrations/2026_05_05_000005_add_discount_fields_to_orders_table.php`
+
+**Verification:** covered by `php artisan test tests\Feature\CheckoutOrderCreationTest.php`.
+
+## A13.6 Coupon Report API
+
+**Covers:**
+
+- [DONE] Coupon reporting API is available at `GET /api/v1/reports/coupons`.
+- [DONE] Coupon web data endpoint is available at `GET /admin/reports/coupons/data`.
+- [DONE] Coupon CSV export is available through `GET /admin/reports/coupons/export`.
+- [DONE] Report data includes total coupons, active coupons, total redemptions, total discount, and per-coupon performance rows.
+- Files:
+  - `backend/app/Modules/Reporting/Controllers/ReportingController.php`
+  - `backend/app/Modules/Reporting/Services/ReportingService.php`
+  - `backend/app/Modules/Reporting/Repositories/ReportingRepository.php`
+  - `backend/app/Modules/Reporting/routes/api.php`
+  - `backend/app/Modules/Reporting/routes/web.php`
+
+**Verification:** covered by `php artisan test tests\Feature\ReportingDashboardTest.php`.

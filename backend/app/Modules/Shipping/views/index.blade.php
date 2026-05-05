@@ -17,7 +17,6 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h3 class="card-title">Delivery Zones</h3>
-                            <p class="text-secondary mb-0 mt-1">Match rates to shipping country, city, state, or postal code.</p>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-zones">Refresh</button>
                     </div>
@@ -95,38 +94,38 @@
                         <div class="row g-3">
                             <div class="col-md-7">
                                 <label for="zone_name" class="form-label">Name</label>
-                                <input id="zone_name" class="form-control" required>
+                                <input id="zone_name" class="form-control form-control-sm" required>
                             </div>
                             <div class="col-md-5">
                                 <label for="zone_code" class="form-label">Code</label>
-                                <input id="zone_code" class="form-control" placeholder="auto-from-name">
+                                <input id="zone_code" class="form-control form-control-sm" placeholder="auto-from-name">
                             </div>
                             <div class="col-md-4">
                                 <label for="zone_country" class="form-label">Country</label>
-                                <input id="zone_country" class="form-control" maxlength="2" value="BD">
+                                <input id="zone_country" class="form-control form-control-sm" maxlength="2" value="BD">
                             </div>
                             <div class="col-md-4">
                                 <label for="zone_status" class="form-label">Status</label>
-                                <select id="zone_status" class="form-select">
+                                <select id="zone_status" class="form-select form-select-sm js-select2" data-placeholder="Status">
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
                             <div class="col-md-4">
                                 <label for="zone_sort_order" class="form-label">Sort</label>
-                                <input id="zone_sort_order" type="number" min="0" step="1" class="form-control" value="0">
+                                <input id="zone_sort_order" type="number" min="0" step="1" class="form-control form-control-sm" value="0">
                             </div>
                             <div class="col-12">
                                 <label for="zone_cities" class="form-label">Cities</label>
-                                <input id="zone_cities" class="form-control" placeholder="Dhaka, Gazipur">
+                                <input id="zone_cities" class="form-control form-control-sm" placeholder="Dhaka, Gazipur">
                             </div>
                             <div class="col-md-6">
                                 <label for="zone_states" class="form-label">States</label>
-                                <input id="zone_states" class="form-control" placeholder="Dhaka">
+                                <input id="zone_states" class="form-control form-control-sm" placeholder="Dhaka">
                             </div>
                             <div class="col-md-6">
                                 <label for="zone_postal_codes" class="form-label">Postal codes</label>
-                                <input id="zone_postal_codes" class="form-control" placeholder="1207, 1213">
+                                <input id="zone_postal_codes" class="form-control form-control-sm" placeholder="1207, 1213">
                             </div>
                         </div>
                     </div>
@@ -146,38 +145,38 @@
                         <div class="row g-3">
                             <div class="col-12">
                                 <label for="rate_delivery_zone_id" class="form-label">Delivery zone</label>
-                                <select id="rate_delivery_zone_id" class="form-select" required></select>
+                                <select id="rate_delivery_zone_id" class="form-select form-select-sm js-select2" data-placeholder="Select a delivery zone" required></select>
                             </div>
                             <div class="col-md-7">
                                 <label for="rate_name" class="form-label">Name</label>
-                                <input id="rate_name" class="form-control" required>
+                                <input id="rate_name" class="form-control form-control-sm" required>
                             </div>
                             <div class="col-md-5">
                                 <label for="rate_code" class="form-label">Code</label>
-                                <input id="rate_code" class="form-control" placeholder="auto-from-name">
+                                <input id="rate_code" class="form-control form-control-sm" placeholder="auto-from-name">
                             </div>
                             <div class="col-md-4">
                                 <label for="rate_amount" class="form-label">Amount</label>
-                                <input id="rate_amount" type="number" min="0" step="0.01" class="form-control" required>
+                                <input id="rate_amount" type="number" min="0" step="0.01" class="form-control form-control-sm" required>
                             </div>
                             <div class="col-md-4">
                                 <label for="rate_min_order_amount" class="form-label">Min order</label>
-                                <input id="rate_min_order_amount" type="number" min="0" step="0.01" class="form-control">
+                                <input id="rate_min_order_amount" type="number" min="0" step="0.01" class="form-control form-control-sm">
                             </div>
                             <div class="col-md-4">
                                 <label for="rate_max_order_amount" class="form-label">Max order</label>
-                                <input id="rate_max_order_amount" type="number" min="0" step="0.01" class="form-control">
+                                <input id="rate_max_order_amount" type="number" min="0" step="0.01" class="form-control form-control-sm">
                             </div>
                             <div class="col-md-6">
                                 <label for="rate_status" class="form-label">Status</label>
-                                <select id="rate_status" class="form-select">
+                                <select id="rate_status" class="form-select form-select-sm js-select2" data-placeholder="Status">
                                     <option value="active">Active</option>
                                     <option value="inactive">Inactive</option>
                                 </select>
                             </div>
                             <div class="col-md-6">
                                 <label for="rate_sort_order" class="form-label">Sort</label>
-                                <input id="rate_sort_order" type="number" min="0" step="1" class="form-control" value="0">
+                                <input id="rate_sort_order" type="number" min="0" step="1" class="form-control form-control-sm" value="0">
                             </div>
                         </div>
                     </div>
@@ -195,7 +194,12 @@
     </div>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+@endpush
+
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const shippingRoutes = {
             zonesData: @json(route('admin.shipping.zones.data')),
@@ -218,6 +222,20 @@
 
         function routeFor(template, id) {
             return template.replace('__ID__', id);
+        }
+
+        function initShippingSelect2() {
+            if (typeof $.fn.select2 !== 'function') {
+                return;
+            }
+
+            $('.js-select2').select2({
+                width: '100%',
+                allowClear: true,
+                placeholder: function () {
+                    return $(this).data('placeholder') || '';
+                },
+            });
         }
 
         function escapeHtml(value) {
@@ -284,6 +302,8 @@
             if (current && deliveryZones.some((zone) => String(zone.id) === String(current))) {
                 $('#rate_delivery_zone_id').val(current);
             }
+
+            $('#rate_delivery_zone_id').trigger('change.select2');
         }
 
         function renderRates() {
@@ -361,6 +381,7 @@
             $('#zone_status').val('active');
             $('#zone_sort_order').val(0);
             $('#zone-form-title').text('Create Delivery Zone');
+            $('#zone_status').trigger('change.select2');
         }
 
         function resetRateForm() {
@@ -370,6 +391,7 @@
             $('#rate_sort_order').val(0);
             $('#rate-form-title').text('Create Shipping Rate');
             renderZoneOptions();
+            $('#rate_status').trigger('change.select2');
         }
 
         function zonePayload() {
@@ -426,6 +448,7 @@
             $('#zone_status').val(zone.status);
             $('#zone_sort_order').val(zone.sort_order);
             $('#zone-form-title').text('Update Delivery Zone');
+            $('#zone_status').trigger('change.select2');
             $('#zone_name').trigger('focus');
         });
 
@@ -446,6 +469,8 @@
             $('#rate_status').val(rate.status);
             $('#rate_sort_order').val(rate.sort_order);
             $('#rate-form-title').text('Update Shipping Rate');
+            $('#rate_delivery_zone_id').trigger('change.select2');
+            $('#rate_status').trigger('change.select2');
             $('#rate_name').trigger('focus');
         });
 
@@ -516,6 +541,7 @@
             }).catch((xhr) => showErrors(xhr, 'Unable to save delivery rate.'));
         });
 
+        initShippingSelect2();
         $.when(loadZones(), loadRates());
     </script>
 @endpush

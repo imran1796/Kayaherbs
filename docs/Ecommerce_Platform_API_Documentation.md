@@ -108,11 +108,15 @@ Login body:
 | POST | `/cart/guest/{cartToken}/items` | Public | Add guest cart item |
 | PUT | `/cart/guest/{cartToken}/items/{itemId}` | Public | Update guest cart item |
 | DELETE | `/cart/guest/{cartToken}/items/{itemId}` | Public | Remove guest cart item |
+| POST | `/cart/guest/{cartToken}/coupon` | Public | Apply guest cart coupon |
+| DELETE | `/cart/guest/{cartToken}/coupon` | Public | Remove guest cart coupon |
 | DELETE | `/cart/guest/{cartToken}` | Public | Clear guest cart |
 | GET | `/customer/cart` | Customer token | Show customer cart |
 | POST | `/customer/cart/items` | Customer token | Add customer cart item |
 | PUT | `/customer/cart/items/{itemId}` | Customer token | Update customer cart item |
 | DELETE | `/customer/cart/items/{itemId}` | Customer token | Remove customer cart item |
+| POST | `/customer/cart/coupon` | Customer token | Apply customer cart coupon |
+| DELETE | `/customer/cart/coupon` | Customer token | Remove customer cart coupon |
 | DELETE | `/customer/cart` | Customer token | Clear customer cart |
 
 Cart item body:
@@ -124,6 +128,16 @@ Cart item body:
   "quantity": 1
 }
 ```
+
+Apply coupon body:
+
+```json
+{
+  "code": "WELCOME10"
+}
+```
+
+Cart responses include `subtotal`, `discount_total`, `grand_total`, and `coupon` when a coupon is applied. Checkout totals include `discount_total` and revalidate the cart coupon before order creation.
 
 ## Checkout
 
@@ -367,6 +381,39 @@ Inventory body:
 }
 ```
 
+## Promotions And Coupons
+
+| Method | Endpoint | Auth | Permission |
+| --- | --- | --- | --- |
+| GET | `/coupons` | Admin token | `coupons.view` |
+| POST | `/coupons` | Admin token | `coupons.create` |
+| GET | `/coupons/{id}` | Admin token | `coupons.view` |
+| PUT | `/coupons/{id}` | Admin token | `coupons.update` |
+| PATCH | `/coupons/{id}/activate` | Admin token | `coupons.update` |
+| PATCH | `/coupons/{id}/deactivate` | Admin token | `coupons.update` |
+| DELETE | `/coupons/{id}` | Admin token | `coupons.delete` |
+
+Coupon body:
+
+```json
+{
+  "name": "Welcome Discount",
+  "code": "WELCOME10",
+  "discount_type": "percentage",
+  "discount_value": 10,
+  "minimum_order_value": 500,
+  "eligible_product_ids": [1, 2],
+  "eligible_category_ids": [3],
+  "usage_limit": 100,
+  "per_customer_usage_limit": 1,
+  "status": "active",
+  "starts_at": "2026-05-06 00:00:00",
+  "ends_at": "2026-05-31 23:59:59"
+}
+```
+
+Supported `discount_type` values are `fixed`, `percentage`, and `free_delivery`. Coupon `lifecycle_status` is derived from `status`, `starts_at`, and `ends_at`. Eligibility rules can restrict coupons by minimum cart subtotal, product IDs, category IDs, total usage limit, and per-customer usage limit.
+
 ## Reports
 
 | Method | Endpoint | Auth | Permission |
@@ -376,11 +423,32 @@ Inventory body:
 | GET | `/reports/sales` | Admin token | `reports.view` |
 | GET | `/reports/inventory` | Admin token | `reports.view` |
 | GET | `/reports/customers` | Admin token | `reports.view` |
+| GET | `/reports/coupons` | Admin token | `reports.view` |
 
 Supported date filters on date-based reports:
 
 ```http
 ?from=2026-04-01&to=2026-04-30
+```
+
+Coupon report returns summary totals and per-coupon performance rows:
+
+```json
+{
+  "summary": {
+    "total_coupons": 1,
+    "active_coupons": 1,
+    "total_redemptions": 2,
+    "total_discount": "150.00"
+  },
+  "coupons": [
+    {
+      "code": "WELCOME10",
+      "redemptions_count": 2,
+      "discount_total": "150.00"
+    }
+  ]
+}
 ```
 
 ## Settings

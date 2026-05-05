@@ -2,7 +2,7 @@
 
 @section('title', 'Products')
 @section('page_title', 'Products')
-@section('page_subtitle', 'Manage products, variants, images, and publishing state.')
+@section('page_subtitle', '')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
@@ -17,7 +17,6 @@
                     <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                         <div>
                             <h3 class="card-title">Products</h3>
-                            <p class="text-secondary mb-0 mt-1">Loaded and managed with AJAX.</p>
                         </div>
                         <button type="button" class="btn btn-sm btn-outline-primary" id="refresh-products">Refresh</button>
                     </div>
@@ -26,11 +25,11 @@
                     <form id="product-filter-form" class="row g-2 align-items-end">
                         <div class="col-md-5">
                             <label for="product_search" class="form-label">Search</label>
-                            <input id="product_search" class="form-control" placeholder="Name or slug">
+                            <input id="product_search" class="form-control form-control-sm" placeholder="Name or slug">
                         </div>
                         <div class="col-md-3">
                             <label for="product_status_filter" class="form-label">Status</label>
-                            <select id="product_status_filter" class="form-select">
+                            <select id="product_status_filter" class="form-select form-select-sm js-select2" data-placeholder="All statuses">
                                 <option value="">All statuses</option>
                                 <option value="draft">Draft</option>
                                 <option value="unpublished">Unpublished</option>
@@ -39,7 +38,7 @@
                         </div>
                         <div class="col-md-4">
                             <label for="product_category_filter" class="form-label">Category</label>
-                            <select id="product_category_filter" class="form-select">
+                            <select id="product_category_filter" class="form-select form-select-sm js-select2" data-placeholder="All categories">
                                 <option value="">All categories</option>
                                 @foreach ($categories as $category)
                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
@@ -85,30 +84,30 @@
 
                     <div class="mb-3">
                         <label for="name" class="form-label">Name</label>
-                        <input id="name" name="name" class="form-control" required>
+                        <input id="name" name="name" class="form-control form-control-sm" required>
                     </div>
 
                     <div class="mb-3">
                         <label for="slug" class="form-label">Slug</label>
-                        <input id="slug" name="slug" class="form-control">
+                        <input id="slug" name="slug" class="form-control form-control-sm">
                     </div>
 
                     <div class="mb-3">
                         <label for="description" class="form-label">Description</label>
-                        <textarea id="description" name="description" rows="3" class="form-control"></textarea>
+                        <textarea id="description" name="description" rows="3" class="form-control form-control-sm"></textarea>
                     </div>
 
                     <div class="row g-2">
                         <div class="col-md-6">
                             <label for="status" class="form-label">Status</label>
-                            <select id="status" name="status" class="form-select">
+                            <select id="status" name="status" class="form-select form-select-sm js-select2" data-placeholder="Select status">
                                 <option value="draft">Draft</option>
                                 <option value="unpublished">Unpublished</option>
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label for="category_ids" class="form-label">Categories</label>
-                            <select id="category_ids" name="category_ids[]" class="form-select" multiple>
+                            <select id="category_ids" name="category_ids[]" class="form-select form-select-sm js-select2" multiple data-placeholder="Select categories">
                                 @foreach ($categories as $category)
                                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                                 @endforeach
@@ -134,26 +133,26 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">Variant name</label>
-                                <input class="form-control variant-name" value="Default" required>
+                                <input class="form-control form-control-sm variant-name" value="Default" required>
                             </div>
                             <div class="row g-2">
                                 <div class="col-md-6">
                                     <label class="form-label">SKU</label>
-                                    <input class="form-control variant-sku" required>
+                                    <input class="form-control form-control-sm variant-sku" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Price</label>
-                                    <input type="number" min="0" step="0.01" class="form-control variant-price" required>
+                                    <input type="number" min="0" step="0.01" class="form-control form-control-sm variant-price" required>
                                 </div>
                             </div>
                             <div class="row g-2 mt-1">
                                 <div class="col-md-6">
                                     <label class="form-label">Compare price</label>
-                                    <input type="number" min="0" step="0.01" class="form-control variant-compare-price">
+                                    <input type="number" min="0" step="0.01" class="form-control form-control-sm variant-compare-price">
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label">Status</label>
-                                    <select class="form-select variant-status">
+                                    <select class="form-select form-select-sm variant-status">
                                         <option value="active">Active</option>
                                         <option value="inactive">Inactive</option>
                                     </select>
@@ -169,17 +168,17 @@
 
                     <div class="mb-3">
                         <label for="primary_image" class="form-label">Upload primary image</label>
-                        <input id="primary_image" type="file" accept="image/*" class="form-control">
+                        <input id="primary_image" type="file" accept="image/*" class="form-control form-control-sm">
                     </div>
 
                     <div class="mb-3">
                         <label for="image_path" class="form-label">Primary image path</label>
-                        <input id="image_path" class="form-control" placeholder="/storage/products/example.jpg">
+                        <input id="image_path" class="form-control form-control-sm" placeholder="/storage/products/example.jpg">
                     </div>
 
                     <div>
                         <label for="image_alt_text" class="form-label">Image alt text</label>
-                        <input id="image_alt_text" class="form-control">
+                        <input id="image_alt_text" class="form-control form-control-sm">
                     </div>
                 </div>
                 <div class="card-footer d-flex justify-content-between">
@@ -191,7 +190,12 @@
     </div>
 @endsection
 
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
+@endpush
+
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         const productRoutes = {
             data: @json(route('admin.products.data')),
@@ -249,6 +253,20 @@
             });
         }
 
+        function initProductSelect2() {
+            if (typeof $.fn.select2 !== 'function') {
+                return;
+            }
+
+            $('.js-select2').select2({
+                width: '100%',
+                placeholder: function () {
+                    return $(this).data('placeholder') || '';
+                },
+                allowClear: true,
+            });
+        }
+
         function appendVariant(formData, index, variant) {
             Object.entries(variant).forEach(([key, value]) => {
                 formData.append(`variants[${index}][${key}]`, value);
@@ -288,26 +306,26 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Variant name</label>
-                        <input class="form-control variant-name" value="${escapeAttribute(variant.name || 'Default')}" required>
+                        <input class="form-control form-control-sm variant-name" value="${escapeAttribute(variant.name || 'Default')}" required>
                     </div>
                     <div class="row g-2">
                         <div class="col-md-6">
                             <label class="form-label">SKU</label>
-                            <input class="form-control variant-sku" value="${escapeAttribute(variant.sku)}" required>
+                            <input class="form-control form-control-sm variant-sku" value="${escapeAttribute(variant.sku)}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Price</label>
-                            <input type="number" min="0" step="0.01" class="form-control variant-price" value="${escapeAttribute(variant.price)}" required>
+                            <input type="number" min="0" step="0.01" class="form-control form-control-sm variant-price" value="${escapeAttribute(variant.price)}" required>
                         </div>
                     </div>
                     <div class="row g-2 mt-1">
                         <div class="col-md-6">
                             <label class="form-label">Compare price</label>
-                            <input type="number" min="0" step="0.01" class="form-control variant-compare-price" value="${escapeAttribute(variant.compare_at_price)}">
+                            <input type="number" min="0" step="0.01" class="form-control form-control-sm variant-compare-price" value="${escapeAttribute(variant.compare_at_price)}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Status</label>
-                            <select class="form-select variant-status">
+                            <select class="form-select form-select-sm variant-status">
                                 <option value="active" ${status === 'active' ? 'selected' : ''}>Active</option>
                                 <option value="inactive" ${status === 'inactive' ? 'selected' : ''}>Inactive</option>
                             </select>
@@ -398,6 +416,8 @@
             $('#primary_image').val('');
             $('#product_id').val('');
             $('#product-form-title').text('Create Product');
+            $('#status').trigger('change.select2');
+            $('#category_ids').trigger('change.select2');
             renderVariantRows();
         }
 
@@ -411,6 +431,8 @@
             $('#category_ids option').each(function () {
                 $(this).prop('selected', (product.categories || []).some((category) => String(category.id) === $(this).val()));
             });
+            $('#status').trigger('change.select2');
+            $('#category_ids').trigger('change.select2');
             renderVariantRows(product.variants || []);
             const image = (product.images || [])[0] || {};
             $('#primary_image').val('');
@@ -514,6 +536,8 @@
             $('#product_search').val('');
             $('#product_status_filter').val('');
             $('#product_category_filter').val('');
+            $('#product_status_filter').trigger('change.select2');
+            $('#product_category_filter').trigger('change.select2');
             loadProducts().catch((error) => showToast(error.message, 'danger'));
         });
         $('#reset-product-form').on('click', resetForm);
@@ -524,6 +548,7 @@
             $(this).closest('.product-variant-row').remove();
             refreshVariantLabels();
         });
+        initProductSelect2();
         renderVariantRows();
         loadProducts().catch((error) => showToast(error.message, 'danger'));
     </script>

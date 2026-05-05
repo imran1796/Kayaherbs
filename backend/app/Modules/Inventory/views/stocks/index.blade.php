@@ -2,7 +2,7 @@
 
 @section('title', 'Inventory')
 @section('page_title', 'Inventory')
-@section('page_subtitle', 'Review product variant stock levels and availability.')
+@section('page_subtitle', '')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
@@ -17,7 +17,6 @@
                     <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                         <div>
                             <h3 class="card-title">Stock List</h3>
-                            <p class="text-secondary mb-0 mt-1">Current on-hand, reserved, and available stock.</p>
                         </div>
                         <div class="d-flex gap-2">
                             <a href="{{ route('admin.inventory.history') }}" class="btn btn-sm btn-outline-secondary">History</a>
@@ -94,17 +93,17 @@
 
                         <div class="mb-3">
                             <label for="adjust_variant_label" class="form-label">Selected variant</label>
-                            <input id="adjust_variant_label" class="form-control" value="Select a stock row" readonly>
+                            <input id="adjust_variant_label" class="form-control form-control-sm" value="Select a stock row" readonly>
                         </div>
 
                         <div class="mb-3">
                             <label for="quantity_delta" class="form-label">Quantity change</label>
-                            <input id="quantity_delta" type="number" step="1" class="form-control" placeholder="Use negative number to reduce" required>
+                            <input id="quantity_delta" type="number" step="1" class="form-control form-control-sm" placeholder="Use negative number to reduce" required>
                         </div>
 
                         <div>
                             <label for="adjustment_note" class="form-label">Note</label>
-                            <textarea id="adjustment_note" rows="3" class="form-control" placeholder="Reason for this adjustment"></textarea>
+                            <textarea id="adjustment_note" rows="3" class="form-control form-control-sm" placeholder="Reason for this adjustment"></textarea>
                         </div>
                     </div>
                     <div class="card-footer d-flex justify-content-between">

@@ -2,7 +2,7 @@
 
 @section('title', 'User Management')
 @section('page_title', 'User Management')
-@section('page_subtitle', 'This page keeps using the module service layer while adopting the AdminLTE admin shell.')
+@section('page_subtitle', '')
 
 @section('breadcrumbs')
     <li class="breadcrumb-item"><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
@@ -15,7 +15,6 @@
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <div>
                     <h3 class="card-title">Users</h3>
-                    <p class="text-secondary mb-0 mt-1">Manage platform users from the admin panel.</p>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <span class="badge text-bg-primary">{{ $users->total() }} total</span>

@@ -15,6 +15,8 @@ use App\Modules\Customer\Services\CustomerAddressService;
 use App\Modules\Inventory\Services\InventoryStockService;
 use App\Modules\Order\Services\OrderLifecycleService;
 use App\Modules\Payment\Services\PaymentService;
+use App\Modules\Promotion\Services\CouponDiscountService;
+use App\Modules\Promotion\Services\CouponRedemptionService;
 use App\Modules\Shipping\Services\DeliveryRateResolverService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -29,6 +31,8 @@ class CheckoutService
         private readonly AuditLogger $auditLogger,
         private readonly OrderLifecycleService $orderLifecycle,
         private readonly PaymentService $payments,
+        private readonly CouponDiscountService $couponDiscounts,
+        private readonly CouponRedemptionService $couponRedemptions,
         private readonly DeliveryRateResolverService $deliveryRates
     ) {}
 
@@ -64,6 +68,8 @@ class CheckoutService
             $order = $this->checkout->createOrder([
                 'user_id' => $customer->id,
                 'cart_id' => $cart->id,
+                'coupon_id' => $cart->coupon_id,
+                'coupon_code' => $cart->coupon_code,
                 'idempotency_key' => $data['idempotency_key'],
                 'status' => 'pending',
                 'payment_status' => 'pending',
@@ -74,12 +80,14 @@ class CheckoutService
                 'payment_method_name' => $payload['payment_method']['name'],
                 'subtotal' => $payload['totals']['subtotal'],
                 'shipping_total' => $payload['totals']['shipping_total'],
+                'discount_total' => $payload['totals']['discount_total'],
                 'grand_total' => $payload['totals']['grand_total'],
                 'currency' => $payload['totals']['currency'],
                 'shipping_address' => $this->addressSnapshot($payload['shipping_address']),
                 'billing_address' => $this->addressSnapshot($payload['billing_address']),
                 'placed_at' => now(),
             ]);
+            $this->couponRedemptions->recordForOrder($order, $customer);
 
             foreach ($this->checkout->availableCartItems($cart) as $item) {
                 $this->checkout->createOrderItem($order, $this->orderItemSnapshot($item));
@@ -126,6 +134,15 @@ class CheckoutService
         $shippingMethod = $this->resolveShippingMethod($shippingAddress, $data, $subtotal);
         $paymentMethod = $this->resolvePaymentMethod($data);
         $shippingTotal = (float) $shippingMethod['amount'];
+        $discountTotals = $this->couponDiscounts->checkoutTotals($cart, $shippingTotal);
+        $discountTotal = (float) $discountTotals['discount_total'];
+        $coupon = $discountTotals['coupon'];
+
+        if ($coupon !== null && ! $coupon['eligible']) {
+            throw ValidationException::withMessages([
+                'coupon' => $coupon['reasons'],
+            ]);
+        }
 
         return [
             'checkout_ready' => true,
@@ -137,7 +154,8 @@ class CheckoutService
             'totals' => [
                 'subtotal' => $this->money($subtotal),
                 'shipping_total' => $this->money($shippingTotal),
-                'grand_total' => $this->money($subtotal + $shippingTotal),
+                'discount_total' => $this->money($discountTotal),
+                'grand_total' => $this->money(max(0, $subtotal + $shippingTotal - $discountTotal)),
                 'currency' => (string) config('store.defaults.currency', 'BDT'),
             ],
             'steps' => [
