@@ -31,6 +31,14 @@
                         <p>User Management</p>
                     </a>
                 </li>
+                @can('roles.view')
+                    <li class="nav-item">
+                        <a href="{{ route('admin.roles.index') }}" class="nav-link {{ request()->routeIs('admin.roles.*') ? 'active' : '' }}">
+                            <span class="nav-icon app-icon" aria-hidden="true">R</span>
+                            <p>Roles</p>
+                        </a>
+                    </li>
+                @endcan
                 @can('customers.view')
                     <li class="nav-item">
                         <a href="{{ route('admin.customers.index') }}" class="nav-link {{ request()->routeIs('admin.customers.*') ? 'active' : '' }}">

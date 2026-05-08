@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\CustomerAddress;
 use App\Models\Order;
+use App\Models\Role;
 use App\Models\User;
 use App\Modules\Cart\Services\CartService;
 use App\Modules\Checkout\Repositories\CheckoutRepository;
@@ -19,6 +20,8 @@ use App\Modules\Promotion\Services\CouponDiscountService;
 use App\Modules\Promotion\Services\CouponRedemptionService;
 use App\Modules\Shipping\Services\DeliveryRateResolverService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CheckoutService
@@ -106,6 +109,94 @@ class CheckoutService
             ]);
             $this->payments->createInitialPaymentForOrder($order, $customer);
 
+            $this->checkout->completeCart($cart);
+
+            return $this->checkout->loadOrder($order);
+        });
+
+        $this->generateOrderConfirmation($order, $customer);
+
+        return $order;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    public function submitGuestCheckout(array $data): Order
+    {
+        $customer = $this->findOrCreateGuestCustomer($data['customer']);
+        $existingOrder = $this->checkout->findOrderByIdempotencyKey($customer, $data['idempotency_key']);
+
+        if ($existingOrder !== null) {
+            $existingOrder->wasRecentlyCreated = false;
+
+            return $existingOrder;
+        }
+
+        $order = DB::transaction(function () use ($customer, $data): Order {
+            $cart = $this->carts->getGuestCart((string) $data['cart_token']);
+            $this->ensureCartCanCheckout($cart);
+
+            $shippingAddress = $this->addresses->create($customer, [
+                ...$data['shipping_address'],
+                'is_default_shipping' => false,
+                'is_default_billing' => false,
+            ]);
+            $billingAddress = $shippingAddress;
+            $subtotal = $this->cartSubtotal($cart);
+            $shippingMethod = $this->resolveShippingMethod($shippingAddress, $data, $subtotal);
+            $paymentMethod = $this->resolvePaymentMethod($data);
+            $shippingTotal = (float) $shippingMethod['amount'];
+            $discountTotals = $this->couponDiscounts->checkoutTotals($cart, $shippingTotal);
+            $discountTotal = (float) $discountTotals['discount_total'];
+            $coupon = $discountTotals['coupon'];
+
+            if ($coupon !== null && ! $coupon['eligible']) {
+                throw ValidationException::withMessages([
+                    'coupon' => $coupon['reasons'],
+                ]);
+            }
+
+            $order = $this->checkout->createOrder([
+                'user_id' => $customer->id,
+                'cart_id' => $cart->id,
+                'coupon_id' => $cart->coupon_id,
+                'coupon_code' => $cart->coupon_code,
+                'idempotency_key' => $data['idempotency_key'],
+                'status' => 'pending',
+                'payment_status' => 'pending',
+                'fulfillment_status' => 'unfulfilled',
+                'shipping_method_code' => $shippingMethod['code'],
+                'shipping_method_name' => $shippingMethod['name'],
+                'payment_method_code' => $paymentMethod['code'],
+                'payment_method_name' => $paymentMethod['name'],
+                'subtotal' => $this->money($subtotal),
+                'shipping_total' => $this->money($shippingTotal),
+                'discount_total' => $this->money($discountTotal),
+                'grand_total' => $this->money(max(0, $subtotal + $shippingTotal - $discountTotal)),
+                'currency' => (string) config('store.defaults.currency', 'BDT'),
+                'shipping_address' => $this->addressSnapshot($shippingAddress),
+                'billing_address' => $this->addressSnapshot($billingAddress),
+                'placed_at' => now(),
+            ]);
+            $this->couponRedemptions->recordForOrder($order, $customer);
+
+            foreach ($this->checkout->availableCartItems($cart) as $item) {
+                $this->checkout->createOrderItem($order, $this->orderItemSnapshot($item));
+                $this->inventory->reserve(
+                    $item->product_variant_id,
+                    $item->quantity,
+                    $customer,
+                    'Reserved during guest checkout.',
+                    ['order_number' => $order->order_number]
+                );
+            }
+
+            $this->orderLifecycle->recordCreation($order, $customer, 'Order placed during guest checkout.', [
+                'cart_id' => $cart->id,
+                'idempotency_key' => $data['idempotency_key'],
+            ]);
+            $this->payments->createInitialPaymentForOrder($order, $customer);
             $this->checkout->completeCart($cart);
 
             return $this->checkout->loadOrder($order);
@@ -346,6 +437,79 @@ class CheckoutService
                 'currency' => $order->currency,
             ],
             guard: 'sanctum'
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $customerData
+     */
+    private function findOrCreateGuestCustomer(array $customerData): User
+    {
+        $phone = trim((string) $customerData['phone']);
+        $email = trim((string) ($customerData['email'] ?? ''));
+        $lookupEmail = $email !== '' ? $email : $this->guestEmailFromPhone($phone);
+
+        /** @var User|null $customer */
+        $customer = User::query()
+            ->customers()
+            ->where(function ($query) use ($lookupEmail, $phone): void {
+                $query
+                    ->where('email', $lookupEmail)
+                    ->orWhere('phone', $phone);
+            })
+            ->first();
+
+        if ($customer !== null) {
+            $customer->fill([
+                'name' => $customerData['name'],
+                'phone' => $phone,
+            ]);
+
+            if ($email !== '' && str_ends_with((string) $customer->email, '@guest.kayaherbs.local')) {
+                $customer->email = $email;
+            }
+
+            $customer->save();
+            $this->ensureCustomerRole($customer, 'guest_checkout_existing_customer');
+
+            return $customer;
+        }
+
+        $customer = User::query()->create([
+            'name' => $customerData['name'],
+            'email' => $lookupEmail,
+            'phone' => $phone,
+            'password' => Hash::make(Str::random(32)),
+            'status' => 'active',
+            'is_admin' => false,
+        ]);
+
+        $this->ensureCustomerRole($customer, 'guest_checkout');
+
+        return $customer;
+    }
+
+    private function guestEmailFromPhone(string $phone): string
+    {
+        $normalized = preg_replace('/[^0-9a-z]+/i', '', $phone) ?: Str::random(10);
+
+        return strtolower($normalized).'@guest.kayaherbs.local';
+    }
+
+    private function ensureCustomerRole(User $customer, string $source): void
+    {
+        if ($customer->hasRole('customer')) {
+            return;
+        }
+
+        $customerRole = Role::findOrCreate('customer', (string) config('rbac.guard', 'web'));
+        $customer->assignRole($customerRole);
+        $this->auditLogger->record(
+            'rbac.role.assigned',
+            actor: $customer,
+            auditable: $customer,
+            metadata: ['role' => 'customer', 'source' => $source],
+            guard: 'web'
         );
     }
 }

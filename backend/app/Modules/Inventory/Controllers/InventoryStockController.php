@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Modules\Inventory\Requests\AdjustStockRequest;
 use App\Modules\Inventory\Requests\ReleaseStockRequest;
 use App\Modules\Inventory\Requests\ReserveStockRequest;
+use App\Modules\Inventory\Requests\UpdateLowStockThresholdRequest;
 use App\Modules\Inventory\Resources\InventoryStockResource;
 use App\Modules\Inventory\Resources\InventoryTransactionResource;
 use App\Modules\Inventory\Services\InventoryStockService;
@@ -120,6 +121,24 @@ class InventoryStockController extends Controller
         return ApiResponse::success(
             new InventoryStockResource($stock),
             'Stock released successfully.'
+        );
+    }
+
+    public function updateThreshold(UpdateLowStockThresholdRequest $request, int $variantId)
+    {
+        $validated = $request->validated();
+        $threshold = array_key_exists('low_stock_threshold', $validated)
+            ? $validated['low_stock_threshold']
+            : null;
+
+        $stock = $this->inventory->updateLowStockThreshold(
+            $variantId,
+            $threshold === null ? null : (int) $threshold
+        );
+
+        return ApiResponse::success(
+            new InventoryStockResource($stock),
+            'Low-stock threshold updated successfully.'
         );
     }
 }

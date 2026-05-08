@@ -81,6 +81,19 @@ class InventoryWorkflowTest extends TestCase
             ->assertSee('Save adjustment');
     }
 
+    public function test_admin_can_view_low_stock_threshold_form(): void
+    {
+        $admin = $this->adminWithRole('admin');
+
+        $this->actingAs($admin)
+            ->get('/admin/inventory')
+            ->assertOk()
+            ->assertSee('Low-Stock Threshold')
+            ->assertSee('low-stock-threshold-form')
+            ->assertSee('low_stock_threshold')
+            ->assertSee('Save threshold');
+    }
+
     public function test_admin_can_view_low_stock_panel(): void
     {
         $admin = $this->adminWithRole('admin');
@@ -167,6 +180,40 @@ class InventoryWorkflowTest extends TestCase
             ->assertJsonPath('data.0.available_quantity', 2)
             ->assertJsonPath('data.0.low_stock_threshold', 2)
             ->assertJsonMissing(['product_variant_id' => $healthyVariant->id]);
+    }
+
+    public function test_admin_can_update_low_stock_threshold(): void
+    {
+        $admin = $this->adminWithRole('admin');
+        [$variant, $stock] = $this->stock(onHand: 5, reserved: 3);
+
+        $this->actingAs($admin)
+            ->patchJson('/admin/inventory/variants/'.$variant->id.'/threshold', [
+                'low_stock_threshold' => 2,
+            ])
+            ->assertOk()
+            ->assertJsonPath('message', 'Low-stock threshold updated successfully.')
+            ->assertJsonPath('data.low_stock_threshold', 2)
+            ->assertJsonPath('data.is_low_stock', true);
+
+        $this->assertSame(2, $stock->refresh()->low_stock_threshold);
+    }
+
+    public function test_admin_can_clear_low_stock_threshold(): void
+    {
+        $admin = $this->adminWithRole('admin');
+        [$variant, $stock] = $this->stock(onHand: 5, reserved: 3);
+        $stock->update(['low_stock_threshold' => 2]);
+
+        $this->actingAs($admin)
+            ->patchJson('/admin/inventory/variants/'.$variant->id.'/threshold', [
+                'low_stock_threshold' => null,
+            ])
+            ->assertOk()
+            ->assertJsonPath('data.low_stock_threshold', null)
+            ->assertJsonPath('data.is_low_stock', false);
+
+        $this->assertNull($stock->refresh()->low_stock_threshold);
     }
 
     public function test_admin_can_view_inventory_history_screen(): void
@@ -397,6 +444,7 @@ class InventoryWorkflowTest extends TestCase
             'admin.inventory.history' => 'inventory.view',
             'admin.inventory.history.data' => 'inventory.view',
             'admin.inventory.variants.adjust' => 'inventory.adjust',
+            'admin.inventory.variants.threshold.update' => 'inventory.adjust',
             'admin.inventory.variants.reserve' => 'inventory.reserve',
             'admin.inventory.variants.release' => 'inventory.release',
         ] as $routeName => $permission) {
@@ -409,6 +457,7 @@ class InventoryWorkflowTest extends TestCase
 
         foreach ([
             'api.v1.inventory.variants.adjust' => 'inventory.adjust',
+            'api.v1.inventory.variants.threshold.update' => 'inventory.adjust',
             'api.v1.inventory.variants.reserve' => 'inventory.reserve',
             'api.v1.inventory.variants.release' => 'inventory.release',
         ] as $routeName => $permission) {

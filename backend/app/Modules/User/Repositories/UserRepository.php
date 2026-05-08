@@ -38,4 +38,13 @@ class UserRepository
     {
         return (bool) $user->delete();
     }
+
+    public function otherActiveSuperAdminExists(int $excludedUserId): bool
+    {
+        return User::query()
+            ->whereKeyNot($excludedUserId)
+            ->where('status', 'active')
+            ->role('super_admin')
+            ->exists();
+    }
 }

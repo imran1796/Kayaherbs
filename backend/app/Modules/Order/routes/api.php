@@ -3,6 +3,10 @@
 use App\Modules\Order\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/orders/lookup', [OrderController::class, 'lookup'])
+    ->middleware('throttle:auth.session')
+    ->name('orders.lookup');
+
 Route::prefix('orders')->name('orders.')->middleware(['auth:sanctum', 'admin'])->group(function (): void {
     Route::get('/', [OrderController::class, 'index'])->middleware('can:orders.view')->name('index');
     Route::get('/{id}', [OrderController::class, 'show'])->middleware('can:orders.view')->name('show');

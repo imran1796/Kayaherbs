@@ -35,6 +35,7 @@
                                     <th>On hand</th>
                                     <th>Reserved</th>
                                     <th>Available</th>
+                                    <th>Threshold</th>
                                     <th>Status</th>
                                     @can('inventory.adjust')
                                         <th class="text-end">Actions</th>
@@ -43,7 +44,7 @@
                             </thead>
                             <tbody id="stock-table-body">
                                 <tr>
-                                    <td colspan="@can('inventory.adjust') 8 @else 7 @endcan" class="text-center py-4 text-secondary">Loading stock...</td>
+                                    <td colspan="@can('inventory.adjust') 9 @else 8 @endcan" class="text-center py-4 text-secondary">Loading stock...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -69,13 +70,15 @@
                             <thead>
                                 <tr>
                                     <th>Item</th>
+                                    <th>On hand</th>
+                                    <th>Reserved</th>
                                     <th>Available</th>
                                     <th>Threshold</th>
                                 </tr>
                             </thead>
                             <tbody id="low-stock-table-body">
                                 <tr>
-                                    <td colspan="3" class="text-center py-4 text-secondary">Loading low-stock items...</td>
+                                    <td colspan="5" class="text-center py-4 text-secondary">Loading low-stock items...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -111,6 +114,31 @@
                         <button type="submit" class="btn btn-primary">Save adjustment</button>
                     </div>
                 </form>
+
+                <form id="low-stock-threshold-form" class="card mt-3">
+                    <div class="card-header">
+                        <h3 class="card-title">Low-Stock Threshold</h3>
+                    </div>
+                    <div class="card-body">
+                        <input type="hidden" id="threshold_variant_id">
+
+                        <div class="mb-3">
+                            <label for="threshold_variant_label" class="form-label">Selected variant</label>
+                            <input id="threshold_variant_label" class="form-control form-control-sm" value="Select a stock row" readonly>
+                        </div>
+
+                        <div class="mb-2">
+                            <label for="low_stock_threshold" class="form-label">Threshold quantity</label>
+                            <input id="low_stock_threshold" type="number" min="0" step="1" class="form-control form-control-sm" placeholder="Blank disables low-stock alert">
+                        </div>
+
+                        <p class="text-secondary small mb-0">Low stock is shown when available quantity is at or below this threshold.</p>
+                    </div>
+                    <div class="card-footer d-flex justify-content-between">
+                        <button type="button" class="btn btn-outline-secondary" id="reset-threshold-form">Reset</button>
+                        <button type="submit" class="btn btn-primary">Save threshold</button>
+                    </div>
+                </form>
             @endcan
         </div>
     </div>
@@ -123,6 +151,7 @@
             lowStock: @json(route('admin.inventory.low-stock.data')),
             @can('inventory.adjust')
             adjust: @json(route('admin.inventory.variants.adjust', ['variantId' => '__ID__'])),
+            threshold: @json(route('admin.inventory.variants.threshold.update', ['variantId' => '__ID__'])),
             @endcan
         };
         const canAdjustStock = @json(auth()->user()->can('inventory.adjust'));
@@ -160,7 +189,7 @@
 
         function renderStocks(stocks) {
             if (!stocks.length) {
-                $('#stock-table-body').html(`<tr><td colspan="${canAdjustStock ? 8 : 7}" class="text-center py-4 text-secondary">No stock records found.</td></tr>`);
+                $('#stock-table-body').html(`<tr><td colspan="${canAdjustStock ? 9 : 8}" class="text-center py-4 text-secondary">No stock records found.</td></tr>`);
                 return;
             }
 
@@ -172,6 +201,7 @@
                     <td>${stock.quantity_on_hand}</td>
                     <td>${stock.quantity_reserved}</td>
                     <td>${stock.available_quantity}</td>
+                    <td>${stock.low_stock_threshold ?? '<span class="text-secondary">Off</span>'}</td>
                     <td>${stockStatus(stock)}</td>
                     ${canAdjustStock ? `
                         <td class="text-end">
@@ -181,6 +211,7 @@
                                 data-action="adjust"
                                 data-variant-id="${stock.product_variant_id}"
                                 data-label="${escapeHtml(`${stock.product_name || 'Product'} / ${stock.variant_name || 'Default'} / ${stock.sku || ''}`)}"
+                                data-threshold="${stock.low_stock_threshold ?? ''}"
                             >Adjust</button>
                         </td>
                     ` : ''}
@@ -190,7 +221,7 @@
 
         function renderLowStock(stocks) {
             if (!stocks.length) {
-                $('#low-stock-table-body').html('<tr><td colspan="3" class="text-center py-4 text-secondary">No low-stock items.</td></tr>');
+                $('#low-stock-table-body').html('<tr><td colspan="5" class="text-center py-4 text-secondary">No low-stock items. Set a threshold on tracked stock rows to enable alerts.</td></tr>');
                 return;
             }
 
@@ -200,6 +231,8 @@
                         <span class="fw-semibold d-block">${escapeHtml(stock.product_name || 'Unassigned product')}</span>
                         <span class="text-secondary">${escapeHtml(stock.variant_name || 'Default')} ${stock.sku ? `/ ${escapeHtml(stock.sku)}` : ''}</span>
                     </td>
+                    <td>${stock.quantity_on_hand}</td>
+                    <td>${stock.quantity_reserved}</td>
                     <td>${stock.available_quantity}</td>
                     <td>${stock.low_stock_threshold}</td>
                 </tr>
@@ -242,12 +275,20 @@
         $('#stock-table-body').on('click', 'button[data-action="adjust"]', function () {
             $('#adjust_variant_id').val($(this).data('variant-id'));
             $('#adjust_variant_label').val($(this).data('label'));
+            $('#threshold_variant_id').val($(this).data('variant-id'));
+            $('#threshold_variant_label').val($(this).data('label'));
+            $('#low_stock_threshold').val($(this).data('threshold'));
             $('#quantity_delta').trigger('focus');
         });
         $('#reset-adjustment-form').on('click', function () {
             $('#stock-adjustment-form')[0].reset();
             $('#adjust_variant_id').val('');
             $('#adjust_variant_label').val('Select a stock row');
+        });
+        $('#reset-threshold-form').on('click', function () {
+            $('#low-stock-threshold-form')[0].reset();
+            $('#threshold_variant_id').val('');
+            $('#threshold_variant_label').val('Select a stock row');
         });
         $('#stock-adjustment-form').on('submit', function (event) {
             event.preventDefault();
@@ -281,6 +322,39 @@
                 const body = xhr.responseJSON || {};
                 const errors = body.errors ? Object.values(body.errors).flat().join(' ') : body.message;
                 adminToast(errors || 'Unable to adjust stock.', 'danger');
+            });
+        });
+        $('#low-stock-threshold-form').on('submit', function (event) {
+            event.preventDefault();
+
+            const variantId = $('#threshold_variant_id').val();
+
+            if (!variantId) {
+                adminToast('Select a stock row before saving threshold.', 'warning');
+                return;
+            }
+
+            const threshold = $('#low_stock_threshold').val();
+
+            $.ajax({
+                url: routeFor(inventoryRoutes.threshold, variantId),
+                method: 'PATCH',
+                dataType: 'json',
+                contentType: 'application/json',
+                data: JSON.stringify({
+                    low_stock_threshold: threshold === '' ? null : threshold,
+                }),
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                },
+            }).then((body) => {
+                adminToast(body.message || 'Low-stock threshold updated successfully.');
+                return $.when(loadStocks(), loadLowStock());
+            }).catch((xhr) => {
+                const body = xhr.responseJSON || {};
+                const errors = body.errors ? Object.values(body.errors).flat().join(' ') : body.message;
+                adminToast(errors || 'Unable to update low-stock threshold.', 'danger');
             });
         });
         @endcan

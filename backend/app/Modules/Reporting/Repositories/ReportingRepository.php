@@ -6,7 +6,9 @@ use App\Models\InventoryStock;
 use App\Models\Coupon;
 use App\Models\CouponRedemption;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class ReportingRepository
@@ -164,6 +166,63 @@ class ReportingRepository
             ->sortByDesc('discount_total')
             ->take($limit)
             ->values();
+    }
+
+    /**
+     * @return array<string, int>
+     */
+    public function userSummary(): array
+    {
+        $users = User::query();
+
+        return [
+            'total_users' => (clone $users)->count(),
+            'active_users' => (clone $users)->where('status', 'active')->count(),
+            'inactive_users' => (clone $users)->where('status', '!=', 'active')->count(),
+        ];
+    }
+
+    public function paymentSummary(): array
+    {
+        $payments = Payment::query()->get();
+
+        return [
+            'total_payments' => $payments->count(),
+            'paid_amount' => $this->money((float) $payments->where('status', 'paid')->sum('amount')),
+            'pending_amount' => $this->money((float) $payments->where('status', 'pending')->sum('amount')),
+            'failed_count' => $payments->where('status', 'failed')->count(),
+            'cod_pending_count' => $payments->where('cod_status', 'pending')->count(),
+            'cod_collected_count' => $payments->where('cod_status', 'collected')->count(),
+        ];
+    }
+
+    public function recentOrders(int $limit = 6): Collection
+    {
+        return Order::query()
+            ->with('customer')
+            ->latest('placed_at')
+            ->latest('id')
+            ->take($limit)
+            ->get();
+    }
+
+    public function expiringCoupons(int $days = 7, int $limit = 5): Collection
+    {
+        return Coupon::query()
+            ->where('status', Coupon::STATUS_ACTIVE)
+            ->whereNotNull('ends_at')
+            ->whereBetween('ends_at', [Carbon::now(), Carbon::now()->addDays($days)])
+            ->orderBy('ends_at')
+            ->take($limit)
+            ->get();
+    }
+
+    public function recentUsers(int $limit = 5): Collection
+    {
+        return User::query()
+            ->latest()
+            ->take($limit)
+            ->get(['id', 'name', 'email', 'status', 'created_at']);
     }
 
     private function ordersInRange(?string $from = null, ?string $to = null)

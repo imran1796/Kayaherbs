@@ -104,6 +104,17 @@ class InventoryStockService
         }, 3);
     }
 
+    public function updateLowStockThreshold(int $variantId, ?int $threshold): InventoryStock
+    {
+        return DB::transaction(function () use ($variantId, $threshold): InventoryStock {
+            $stock = $this->lockedStockForVariant($variantId);
+
+            return $this->stocks->update($stock, [
+                'low_stock_threshold' => $threshold,
+            ]);
+        }, 3);
+    }
+
     private function lockedStockForVariant(int $variantId): InventoryStock
     {
         $this->stocks->lockVariantOrFail($variantId);

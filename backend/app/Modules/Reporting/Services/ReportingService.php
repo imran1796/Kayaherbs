@@ -132,6 +132,97 @@ class ReportingService
     }
 
     /**
+     * @return array<string, mixed>
+     */
+    public function adminDashboard(): array
+    {
+        $today = now()->toDateString();
+        $monthStart = now()->startOfMonth()->toDateString();
+        $orders = $this->ordersReport();
+        $inventory = $this->inventoryReport();
+        $customers = $this->customerReport();
+        $coupons = $this->couponReport();
+        $payments = $this->reports->paymentSummary();
+        $expiringCoupons = $this->reports->expiringCoupons();
+        $statusCounts = $orders['status_counts'];
+
+        return [
+            'stats' => $this->reports->userSummary(),
+            'sales' => [
+                'today_sales' => $this->reports->grossSales($today, $today),
+                'today_orders' => $this->reports->totalOrders($today, $today),
+                'month_sales' => $this->reports->grossSales($monthStart, $today),
+                'month_orders' => $this->reports->totalOrders($monthStart, $today),
+                'average_order_value' => $orders['total_orders'] > 0
+                    ? number_format((float) $this->reports->grossSales() / $orders['total_orders'], 2, '.', '')
+                    : '0.00',
+            ],
+            'orders' => $orders,
+            'customers' => $customers['summary'],
+            'top_customers' => $customers['top_customers'],
+            'inventory' => $inventory['summary'],
+            'low_stock_rows' => $inventory['low_stock'],
+            'payments' => $payments,
+            'coupons' => $coupons['summary'],
+            'coupon_rows' => $coupons['coupons'],
+            'recent_orders' => $this->reports->recentOrders()
+                ->map(fn ($order): array => [
+                    'id' => $order->id,
+                    'order_number' => $order->order_number,
+                    'customer_name' => $order->customer?->name,
+                    'status' => $order->status,
+                    'payment_status' => $order->payment_status,
+                    'grand_total' => number_format((float) $order->grand_total, 2, '.', ''),
+                    'placed_at' => $order->placed_at?->format('d M, h:i A'),
+                ])
+                ->values()
+                ->all(),
+            'recent_users' => $this->reports->recentUsers(),
+            'expiring_coupons' => $expiringCoupons
+                ->map(fn ($coupon): array => [
+                    'id' => $coupon->id,
+                    'code' => $coupon->code,
+                    'name' => $coupon->name,
+                    'ends_at' => $coupon->ends_at?->format('d M Y'),
+                ])
+                ->values()
+                ->all(),
+            'actions' => [
+                [
+                    'label' => 'Orders waiting for confirmation',
+                    'count' => $statusCounts['pending'] ?? 0,
+                    'route' => 'admin.orders.index',
+                    'tone' => 'primary',
+                ],
+                [
+                    'label' => 'Orders in processing or packing',
+                    'count' => ($statusCounts['processing'] ?? 0) + ($statusCounts['packed'] ?? 0),
+                    'route' => 'admin.orders.index',
+                    'tone' => 'info',
+                ],
+                [
+                    'label' => 'Low-stock variants need attention',
+                    'count' => $inventory['summary']['low_stock_count'],
+                    'route' => 'admin.inventory.index',
+                    'tone' => 'warning',
+                ],
+                [
+                    'label' => 'COD payments pending collection',
+                    'count' => $payments['cod_pending_count'],
+                    'route' => 'admin.orders.index',
+                    'tone' => 'success',
+                ],
+                [
+                    'label' => 'Coupons expiring soon',
+                    'count' => $expiringCoupons->count(),
+                    'route' => 'admin.coupons.index',
+                    'tone' => 'secondary',
+                ],
+            ],
+        ];
+    }
+
+    /**
      * @return array{filename: string, headers: list<string>, rows: list<list<string|int|float|null>>}
      */
     public function export(string $report, ?string $from = null, ?string $to = null): array

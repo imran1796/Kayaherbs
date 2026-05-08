@@ -15,4 +15,8 @@ Route::prefix('inventory')->name('inventory.')->middleware(['auth:sanctum', 'adm
     Route::post('/variants/{variantId}/release', [InventoryStockController::class, 'release'])
         ->middleware('can:inventory.release')
         ->name('variants.release');
+
+    Route::patch('/variants/{variantId}/threshold', [InventoryStockController::class, 'updateThreshold'])
+        ->middleware('can:inventory.adjust')
+        ->name('variants.threshold.update');
 });

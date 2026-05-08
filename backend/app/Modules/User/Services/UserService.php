@@ -55,6 +55,8 @@ class UserService
                 ]);
             }
 
+            $this->ensureSuperAdminRemainsReachable($user, $data);
+
             /** @var User $updatedUser */
             $updatedUser = $this->users->update($user, $this->sanitizePayload($data, false));
 
@@ -113,5 +115,32 @@ class UserService
     private function rolesMakeAdmin(array $roles): bool
     {
         return count(array_diff($roles, ['customer'])) > 0;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function ensureSuperAdminRemainsReachable(User $user, array $data): void
+    {
+        if (! $user->hasRole('super_admin')) {
+            return;
+        }
+
+        $roles = array_key_exists('roles', $data)
+            ? array_values(array_filter((array) $data['roles']))
+            : $user->getRoleNames()->all();
+
+        $willLoseSuperAdmin = ! in_array('super_admin', $roles, true);
+        $willBeInactive = ($data['status'] ?? $user->status) !== 'active';
+
+        if (! $willLoseSuperAdmin && ! $willBeInactive) {
+            return;
+        }
+
+        if (! $this->users->otherActiveSuperAdminExists((int) $user->id)) {
+            throw ValidationException::withMessages([
+                'roles' => ['At least one active super admin must remain.'],
+            ]);
+        }
     }
 }

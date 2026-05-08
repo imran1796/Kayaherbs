@@ -4,9 +4,11 @@ namespace App\Modules\Order\Controllers;
 
 use App\Core\Support\ApiResponse;
 use App\Http\Controllers\Controller;
+use App\Models\Order;
 use App\Modules\Order\Requests\CancelOrderRequest;
 use App\Modules\Order\Requests\GenerateInvoiceRequest;
 use App\Modules\Order\Requests\GeneratePackingSlipRequest;
+use App\Modules\Order\Requests\PublicOrderLookupRequest;
 use App\Modules\Order\Requests\StoreOrderNoteRequest;
 use App\Modules\Order\Requests\StoreReturnRequest;
 use App\Modules\Order\Requests\StoreShipmentRequest;
@@ -25,6 +27,28 @@ class OrderController extends Controller
     public function __construct(
         private readonly OrderLifecycleService $orders
     ) {}
+
+    public function lookup(PublicOrderLookupRequest $request)
+    {
+        $phone = $request->validated('phone');
+
+        $order = Order::query()
+            ->with(['customer', 'items', 'payments', 'statusHistories'])
+            ->where('order_number', $request->validated('order_number'))
+            ->when($phone !== '', function ($query) use ($phone): void {
+                $query->where(function ($phoneQuery) use ($phone): void {
+                    $phoneQuery
+                        ->whereHas('customer', fn ($customerQuery) => $customerQuery->where('phone', $phone))
+                        ->orWhere('shipping_address->phone', $phone);
+                });
+            })
+            ->firstOrFail();
+
+        return ApiResponse::success(
+            new AdminOrderResource($order),
+            'Order fetched successfully.'
+        );
+    }
 
     public function index(Request $request)
     {
